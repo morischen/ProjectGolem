@@ -49,6 +49,12 @@ Decisions locked:
   resistance. **14/14 pytest tests pass** (determinism, weights-sum, formula
   fixtures, all six verdicts, Insufficient/Mixed as real outcomes, contradiction
   flips Verified→Mixed). Added root `.gitignore`.
+- **2026-06-19** — **Dev ergonomics**: `scripts/dev.sh` (+ root `pnpm dev`) boots
+  the whole stack on fixed ports (trust :8000, claim :8001, evidence :8002, gateway
+  :4000, portal :3000) with Ctrl-C cleanup; portal page set to `force-dynamic` so
+  production also fetches live. Verified end-to-end: gateway `/health` 200, live
+  `POST /v1/score` → Verified, portal banner flips to "Live verdict from gateway"
+  (Likely True). Also whitelisted esbuild's pnpm build script (warning gone).
 - **2026-06-19** — **End-to-end integration test** (`ai-services/e2e`): a
   non-package uv project path-depending on all three engines; drives
   **claim → evidence → trust** in one process with stubs, exchanging `Evidence` as
@@ -194,6 +200,9 @@ Larger initiatives, not single mechanical loops — each needs its own scoping:
 
 ## Loop log (append-only, newest first)
 
+- **2026-06-19** — Dev-ergonomics: `scripts/dev.sh` / `pnpm dev` one-command stack
+  runner + portal `force-dynamic`. Verified live path (gateway→trust-engine→portal)
+  with real servers. `./scripts/qa.sh` green.
 - **2026-06-19** — End-to-end integration test loop (autonomous session): new
   `ai-services/e2e` cross-engine pipeline test (claim→evidence→trust via JSON);
   added to gate + CI. **This drained the queued Next list (Loops A–O).**

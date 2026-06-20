@@ -3,6 +3,11 @@ import { ContradictionsPanel } from "../components/ContradictionsPanel";
 import { VerdictCard } from "../components/VerdictCard";
 import { fetchVerdict } from "../lib/gateway";
 
+// Render per-request so production builds fetch live verdicts too (not just `next
+// dev`). Without this, `next build` would statically prerender with whatever it
+// fetched at build time (i.e. the sample fallback).
+export const dynamic = "force-dynamic";
+
 export default async function Home() {
   const { result, evidence, live } = await fetchVerdict();
 

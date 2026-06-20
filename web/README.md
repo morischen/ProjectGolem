@@ -14,11 +14,15 @@ lives in the Python Trust Engine; INV-DETERMINISM).
 ## Common tasks (run from repo root)
 ```bash
 pnpm install
+pnpm dev               # boot the FULL stack (engines + gateway :4000 + portal :3000)
 pnpm gen:contracts     # regenerate @eip/contracts TS types from ../contracts
 pnpm -r typecheck
 pnpm -r test
+pnpm --filter @eip/portal dev          # portal only (sample-data fallback)
 pnpm --filter @eip/api-gateway start   # run the gateway (PORT, default 3000)
 ```
+`pnpm dev` wraps `scripts/dev.sh` — Ctrl-C stops everything. The gateway runs on
+:4000 to avoid colliding with the portal on :3000.
 
 Generated files under `packages/contracts/src/` are do-not-edit — change the JSON
 Schema in `contracts/` and rerun `pnpm gen:contracts`.
