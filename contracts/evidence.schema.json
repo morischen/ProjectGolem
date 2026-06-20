@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://eip.example/contracts/evidence.schema.json",
+  "title": "Evidence",
+  "description": "A single, classified piece of evidence bearing on a claim. quality and freshness are normalized [0,1] signals computed upstream (retrieval/classification); the Trust Engine consumes them as given.",
+  "type": "object",
+  "$defs": {
+    "EvidenceRelation": {
+      "title": "EvidenceRelation",
+      "description": "How a piece of evidence relates to the claim under assessment.",
+      "type": "string",
+      "enum": ["supports", "contradicts", "neutral", "inconclusive"]
+    }
+  },
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Stable identifier of this evidence item."
+    },
+    "source_id": {
+      "type": "string",
+      "description": "Stable id of the originating source, used for independence/corroboration."
+    },
+    "source_tier": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 4,
+      "description": "1=primary, 2=trusted reporting, 3=context, 4=emerging."
+    },
+    "relation": {
+      "$ref": "#/$defs/EvidenceRelation"
+    },
+    "quality": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Strength of the supporting material."
+    },
+    "freshness": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Recency, normalized; precomputed upstream."
+    }
+  },
+  "required": ["id", "source_id", "source_tier", "relation", "quality", "freshness"],
+  "additionalProperties": false
+}

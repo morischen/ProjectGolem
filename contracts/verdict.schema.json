@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://eip.example/contracts/verdict.schema.json",
+  "title": "TrustResult",
+  "description": "The deterministic output of the Trust Engine: a verdict with its full, explainable scoring breakdown. Produced only by the deterministic Trust Engine (INV-DETERMINISM); LLMs never generate these values.",
+  "type": "object",
+  "$defs": {
+    "Verdict": {
+      "title": "Verdict",
+      "description": "Allowed verdict outcomes (base blueprint §9). Insufficient and Mixed are first-class results; the system never forces a conclusion (INV-FORCE).",
+      "type": "string",
+      "enum": [
+        "Verified",
+        "Likely True",
+        "Mixed Evidence",
+        "Insufficient Evidence",
+        "Likely False",
+        "False"
+      ]
+    },
+    "ConfidenceBreakdown": {
+      "title": "ConfidenceBreakdown",
+      "description": "Per-component values (each [0,1]) and the weighted total — full explainability of the score.",
+      "type": "object",
+      "properties": {
+        "source_reliability": { "type": "number", "minimum": 0, "maximum": 1 },
+        "corroboration": { "type": "number", "minimum": 0, "maximum": 1 },
+        "evidence_quality": { "type": "number", "minimum": 0, "maximum": 1 },
+        "independence": { "type": "number", "minimum": 0, "maximum": 1 },
+        "freshness": { "type": "number", "minimum": 0, "maximum": 1 },
+        "weighted_total": { "type": "number", "minimum": 0, "maximum": 1 }
+      },
+      "required": [
+        "source_reliability",
+        "corroboration",
+        "evidence_quality",
+        "independence",
+        "freshness",
+        "weighted_total"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "properties": {
+    "score": { "type": "number", "minimum": 0, "maximum": 1 },
+    "verdict": { "$ref": "#/$defs/Verdict" },
+    "breakdown": { "$ref": "#/$defs/ConfidenceBreakdown" },
+    "weights_version": {
+      "type": "string",
+      "description": "Version of the scoring config that produced this result (reproducibility)."
+    },
+    "relevant_count": { "type": "integer", "minimum": 0 },
+    "supporting_count": { "type": "integer", "minimum": 0 },
+    "contradicting_count": { "type": "integer", "minimum": 0 },
+    "net_support": {
+      "type": "number",
+      "minimum": -1,
+      "maximum": 1,
+      "description": "(support_mass - contradict_mass) / total_mass."
+    },
+    "conflict_ratio": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 0.5,
+      "description": "minority_mass / total_mass."
+    }
+  },
+  "required": [
+    "score",
+    "verdict",
+    "breakdown",
+    "weights_version",
+    "relevant_count",
+    "supporting_count",
+    "contradicting_count",
+    "net_support",
+    "conflict_ratio"
+  ],
+  "additionalProperties": false
+}

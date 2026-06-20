@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://eip.example/contracts/claim.schema.json",
+  "title": "Claim",
+  "description": "A normalized claim object produced by the Claim Engine from raw input (FR-002). Forward contract: defines the shape now so producers/consumers agree; the Claim Engine is a later vertical.",
+  "type": "object",
+  "$defs": {
+    "ClaimType": {
+      "title": "ClaimType",
+      "description": "Claim-type taxonomy that drives downstream handling. Empirical claims are verifiable facts; legal/definitional/normative claims are NOT adjudicated as truth by the Trust Engine.",
+      "type": "string",
+      "enum": ["empirical", "legal", "definitional", "predictive", "normative"]
+    }
+  },
+  "properties": {
+    "id": { "type": "string", "description": "Stable identifier of this claim." },
+    "text": { "type": "string", "description": "Normalized claim statement." },
+    "claim_type": { "$ref": "#/$defs/ClaimType" },
+    "actors": {
+      "type": "array",
+      "items": { "type": "string" },
+      "default": [],
+      "description": "Entities asserted to act."
+    },
+    "targets": {
+      "type": "array",
+      "items": { "type": "string" },
+      "default": [],
+      "description": "Entities asserted to be acted upon."
+    },
+    "events": {
+      "type": "array",
+      "items": { "type": "string" },
+      "default": [],
+      "description": "Events referenced by the claim."
+    },
+    "locations": {
+      "type": "array",
+      "items": { "type": "string" },
+      "default": []
+    },
+    "dates": {
+      "type": "array",
+      "items": { "type": "string" },
+      "default": [],
+      "description": "Dates/intervals referenced (ISO-8601 where known, else free text)."
+    },
+    "assertions": {
+      "type": "array",
+      "items": { "type": "string" },
+      "default": [],
+      "description": "Atomic assertions extracted from the claim text."
+    },
+    "language": {
+      "type": ["string", "null"],
+      "description": "BCP-47 language tag of the source (e.g. ar, he, en)."
+    },
+    "source_url": {
+      "type": ["string", "null"],
+      "description": "Origin URL, if the claim came from a web source."
+    }
+  },
+  "required": ["id", "text", "claim_type"],
+  "additionalProperties": false
+}

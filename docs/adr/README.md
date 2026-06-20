@@ -28,3 +28,4 @@ Routine, easily-reversed choices do not need an ADR — put those in code commen
 | [0001](0001-record-architecture-decisions.md) | Record architecture decisions | Accepted |
 | [0002](0002-polyglot-python-ai-typescript-web.md) | Polyglot stack: Python AI services + TypeScript web | Accepted |
 | [0003](0003-deterministic-trust-engine.md) | Deterministic Trust Engine — LLMs never score | Accepted |
+| [0004](0004-contract-codegen-toolchain.md) | Contract codegen toolchain (datamodel-code-generator) | Accepted |

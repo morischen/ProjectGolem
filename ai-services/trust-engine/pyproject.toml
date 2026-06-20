@@ -11,7 +11,11 @@ dev = ["pytest>=8.0"]
 # uv installs default dependency-groups on `uv sync` (PEP 735). Kept in sync with
 # the [dev] extra above so both `uv` and `pip install -e ".[dev]"` work.
 [dependency-groups]
-dev = ["pytest>=8.0"]
+dev = [
+    "datamodel-code-generator>=0.25",
+    "jsonschema>=4.0",
+    "pytest>=8.0",
+]
 
 [build-system]
 requires = ["hatchling"]

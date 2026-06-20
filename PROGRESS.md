@@ -49,6 +49,13 @@ Decisions locked:
   resistance. **14/14 pytest tests pass** (determinism, weights-sum, formula
   fixtures, all six verdicts, Insufficient/Mixed as real outcomes, contradiction
   flips Verified→Mixed). Added root `.gitignore`.
+- **2026-06-19** — **Contracts v0**: authored [contracts/](contracts/) JSON
+  Schemas (evidence, verdict, claim) as the source of truth; chose
+  datamodel-code-generator ([ADR-0004](docs/adr/0004-contract-codegen-toolchain.md))
+  and generated Pydantic models into `eip_trust/_generated/` (do-not-edit, `make
+  gen`). Migrated the engine to consume generated shapes via a thin `models.py`
+  facade (public API unchanged; `ScoringWeights` moved to `weights.py`). Added
+  jsonschema conformance tests. **21/21 pytest tests pass.**
 
 ---
 
@@ -76,18 +83,18 @@ Decisions locked:
 
 In priority order. Each is one loop unless noted.
 
-1. **Contracts v0** — author `claim.schema.json`, `evidence.schema.json`,
-   `verdict.schema.json` in `contracts/`, pick the codegen toolchain, and generate
-   Pydantic + TS types. Then migrate the Trust Engine's hand-authored models to the
-   generated ones. (Resolves an ADR in ARCHITECTURE.md §8.)
-2. **Trust Engine hardening** — add `ruff` + `mypy --strict` config and a CI lane;
-   add calibration/golden-fixture tests tied to the gold benchmark (§28); consider
-   freshness-from-dates and domain/claim-type-aware weights (blueprint §10/§23).
+1. **Dev-tooling lane** — add `ruff` + `mypy` as dev deps and wire `make lint` /
+   typecheck (currently referenced but not installed); add a CI workflow running
+   `uv run pytest` + lint. Low effort, closes the verification gap.
+2. **Trust Engine hardening** — calibration/golden-fixture tests tied to the gold
+   benchmark (§28); consider freshness-from-dates and domain/claim-type-aware
+   weights (blueprint §10/§23).
 3. **Gold-benchmark harness stub** — schema + loader for benchmark items
    (spec §28) so L0 gates (G0.x) become measurable early; wire ECE against the
    Trust Engine.
-4. **Repo scaffolding (remaining)** — `web/` (Fastify gateway + Next.js portal),
-   `infra/docker-compose.yml` for the four data stores, and `pnpm` workspace.
+4. **Repo scaffolding (remaining)** — `web/` (Fastify gateway + Next.js portal)
+   with TS codegen from `contracts/` (ADR-0004), `infra/docker-compose.yml` for the
+   four data stores, and the `pnpm` workspace.
 
 ---
 
@@ -103,6 +110,10 @@ In priority order. Each is one loop unless noted.
 
 ## Loop log (append-only, newest first)
 
+- **2026-06-19** — Contracts v0 loop: `contracts/` JSON Schemas + ADR-0004 +
+  generated Pydantic models (`make gen`) + engine migration to a facade +
+  jsonschema conformance tests. Verification: `uv run pytest` → **21 passed**.
+  Note: `ruff`/`mypy` referenced but not yet installed → queued as next loop.
 - **2026-06-19** — Committed the foundational baseline (docs + framework + Trust
   Engine) as the repo's first commit. Set git identity to moris.chen@gmail.com;
   working directly on `main` per owner directive (CLAUDE.md §8). 14/14 tests green.
