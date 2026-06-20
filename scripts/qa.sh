@@ -10,6 +10,7 @@ root="$(cd "$(dirname "$0")/.." && pwd)"
 
 # Python services expose a `make qa` target (lint + typecheck + test + smoke).
 PY_SERVICES=(
+  "ai-services/libs/eip-persistence"
   "ai-services/trust-engine"
   "ai-services/claim-engine"
   "ai-services/evidence-engine"

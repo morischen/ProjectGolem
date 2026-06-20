@@ -49,6 +49,12 @@ Decisions locked:
   resistance. **14/14 pytest tests pass** (determinism, weights-sum, formula
   fixtures, all six verdicts, Insufficient/Mixed as real outcomes, contradiction
   flips Verified→Mixed). Added root `.gitignore`.
+- **2026-06-19** — **Persistence Q1 — bitemporal verdict store**: new shared lib
+  [eip-persistence](ai-services/libs/eip-persistence/) ([ADR-0008](docs/adr/0008-bitemporal-verdict-store.md))
+  — append-only, versioned `VerdictRecord`s (frozen) behind a `VerdictStore` protocol
+  with `InMemoryVerdictStore`. Two time axes (knowledge/event), caller-supplied
+  timestamps (deterministic), and `as_of(t)` answers "what did we conclude on date X"
+  (INV-TEMPORAL; Principle 5). 8 tests; wired into the gate + CI.
 - **2026-06-19** — **Independence → Trust Engine wiring**: `score_claim` now accepts
   an optional `independence` override (clamped) that replaces the count-based
   heuristic with the graph-derived `independence_ratio` (ADR-0007); exposed on the
@@ -217,8 +223,10 @@ Larger initiatives, not single mechanical loops — each needs its own scoping:
   follow-ups: a real embedding model, graph-schema seeding scripts. (✅ feeding
   `independence_ratio` into the Trust Engine is done — `score_claim(independence=...)`
   + `/v1/score`; remaining is threading it through the gateway end to end.)
-- **Persistence & bitemporal verdicts** — Postgres-backed canonical claim/verdict
-  records with versioned snapshots (INV-TEMPORAL); audit log.
+- **Persistence & bitemporal verdicts** (in progress) — ✅ Q1 bitemporal store
+  abstraction + in-memory impl. Remaining: **Q2** Postgres adapter (SQLAlchemy,
+  tested on SQLite) + schema/docker-compose docs; **Q3** audit log + persist each
+  verdict in the pipeline.
 - **Real LLM enablement** — exercise `AnthropicLLMClient` end-to-end with an API
   key behind a feature flag; calibration tests against the gold benchmark (§28).
 - **AuthN/Z + rate limiting** — OIDC, RBAC, MFA at the gateway (blueprint §22).
@@ -231,6 +239,9 @@ Larger initiatives, not single mechanical loops — each needs its own scoping:
 
 ## Loop log (append-only, newest first)
 
+- **2026-06-19** — Persistence Q1 loop: bitemporal verdict store (eip-persistence,
+  ADR-0008) — append-only/versioned, `as_of` queries. Verification: `./scripts/qa.sh`
+  → eip-persistence 8, all services green.
 - **2026-06-19** — Independence→Trust wiring loop: `score_claim(independence=...)`
   override + `/v1/score` field + cross-engine e2e (laundering flips Verified→Likely
   True). Verification: `./scripts/qa.sh` → trust 49, e2e 4, all green.

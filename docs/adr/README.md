@@ -32,3 +32,4 @@ Routine, easily-reversed choices do not need an ADR — put those in code commen
 | [0005](0005-llm-recorded-wrapper.md) | LLM access via a recorded wrapper | Accepted |
 | [0006](0006-retrieval-seams.md) | Retrieval seams (Embedder / VectorStore / GraphStore) | Accepted |
 | [0007](0007-independence-citation-laundering.md) | Independence / citation-laundering detection | Accepted |
+| [0008](0008-bitemporal-verdict-store.md) | Bitemporal verdict persistence | Accepted |
