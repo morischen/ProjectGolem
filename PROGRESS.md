@@ -49,6 +49,14 @@ Decisions locked:
   resistance. **14/14 pytest tests pass** (determinism, weights-sum, formula
   fixtures, all six verdicts, Insufficient/Mixed as real outcomes, contradiction
   flips Verified→Mixed). Added root `.gitignore`.
+- **2026-06-19** — **Evidence Retrieval Engine vertical** (`ai-services/evidence-engine`):
+  the pipeline's middle — `gather()` retrieves candidates (`Retriever` seam,
+  `StubRetriever` for tests) and the LLM classifies each one's relation
+  (Supports/Contradicts/Neutral/Inconclusive) via the recorded wrapper; quality/
+  freshness/tier come from retrieval metadata, not the LLM. Emits contract-valid
+  `Evidence` ready for the Trust Engine. LLM never scores (INV-DETERMINISM). QA
+  green: 8 tests + smoke; wired into the repo gate + CI. (LLM wrapper duplicated
+  from claim-engine — flagged to extract into a shared lib.)
 - **2026-06-19** — **Claim Engine HTTP + gateway wiring**: FastAPI `eip_claim.api`
   (`/health`, `POST /v1/extract` → `Claim`) with an injectable LLM client (stub in
   tests, Anthropic at runtime; `make serve`, port 8001). Gateway gains a typed
@@ -140,12 +148,14 @@ Decisions locked:
 
 In priority order. Each is one loop unless noted.
 
-1. **Evidence Retrieval Engine vertical** — the missing middle of claim→verdict:
-   take a `Claim`, retrieve + classify candidate `Evidence` (Supports/Contradicts/
-   Neutral/Inconclusive), with a stubbed retriever for hermetic tests.
-2. **Portal depth** — evidence graph view, contradictions panel, appeal entry;
+1. **Shared `eip_llm` lib** — extract the recorded LLM wrapper (duplicated in
+   claim-engine and evidence-engine) into a shared Python package; both depend on
+   it via a uv path dependency. Pays down the flagged duplication.
+2. **Evidence Engine HTTP + gateway wiring** — FastAPI `POST /v1/gather` (claim →
+   `Evidence[]`) + gateway proxy, completing the wired extract→gather→score path.
+3. **Portal depth** — evidence graph view, contradictions panel, appeal entry;
    accessibility pass.
-3. **End-to-end integration test** — optional real round-trip (spin up the FastAPI
+4. **End-to-end integration test** — optional real round-trip (spin up the FastAPI
    services + gateway) in CI, complementing the mocked unit tests.
 
 ---
@@ -162,6 +172,10 @@ In priority order. Each is one loop unless noted.
 
 ## Loop log (append-only, newest first)
 
+- **2026-06-19** — Evidence Retrieval Engine loop (autonomous session): new
+  `evidence-engine` — retriever seam + LLM relation classification → contract-valid
+  Evidence; added to repo QA gate + CI. Verification: `./scripts/qa.sh` → trust 46
+  + claim 15 + evidence 8 + gateway 8 + portal 6.
 - **2026-06-19** — Claim Engine HTTP + gateway wiring loop (autonomous session):
   FastAPI `/v1/extract` (DI'd LLM) + gateway `ClaimClient`/proxy + mocked tests.
   Verification: `./scripts/qa.sh` → trust 46 + claim 15 + gateway 8 + portal 6.

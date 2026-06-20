@@ -12,6 +12,7 @@ root="$(cd "$(dirname "$0")/.." && pwd)"
 PY_SERVICES=(
   "ai-services/trust-engine"
   "ai-services/claim-engine"
+  "ai-services/evidence-engine"
 )
 
 for svc in "${PY_SERVICES[@]}"; do
