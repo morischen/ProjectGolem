@@ -64,8 +64,16 @@ def _insufficient(
 def score_claim(
     evidence: Sequence[Evidence],
     weights: ScoringWeights = DEFAULT_WEIGHTS,
+    *,
+    independence: float | None = None,
 ) -> TrustResult:
-    """Score a claim from its classified evidence. Pure and deterministic."""
+    """Score a claim from its classified evidence. Pure and deterministic.
+
+    `independence` optionally overrides the count-based independence heuristic with a
+    precomputed [0,1] signal — e.g. the Evidence Engine's graph-derived
+    `independence_ratio`, which detects shared-origin / citation-laundering so
+    apparent corroboration isn't over-credited (ADR-0007).
+    """
 
     relevant = [e for e in evidence if e.relation in _DIRECTIONAL]
     supports = [e for e in relevant if e.relation is EvidenceRelation.SUPPORTS]
@@ -95,7 +103,10 @@ def score_claim(
     freshness = _mean([e.freshness for e in relevant])
 
     distinct_total = len({e.source_id for e in relevant})
-    independence = 1.0 - 1.0 / distinct_total if distinct_total > 0 else 0.0
+    computed_independence = 1.0 - 1.0 / distinct_total if distinct_total > 0 else 0.0
+    independence_value = (
+        computed_independence if independence is None else max(0.0, min(1.0, independence))
+    )
 
     dominant = supports if support_mass >= contradict_mass else contradicts
     distinct_dominant = len({e.source_id for e in dominant})
@@ -105,7 +116,7 @@ def score_claim(
         weights.source_reliability * source_reliability
         + weights.corroboration * corroboration
         + weights.evidence_quality * evidence_quality
-        + weights.independence * independence
+        + weights.independence * independence_value
         + weights.freshness * freshness
     )
 
@@ -113,7 +124,7 @@ def score_claim(
         source_reliability=source_reliability,
         corroboration=corroboration,
         evidence_quality=evidence_quality,
-        independence=independence,
+        independence=independence_value,
         freshness=freshness,
         weighted_total=weighted_total,
     )

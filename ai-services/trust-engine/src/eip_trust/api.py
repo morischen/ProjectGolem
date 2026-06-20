@@ -23,6 +23,12 @@ class ScoreRequest(BaseModel):
     historical: bool = Field(
         default=False, description="Select the freshness-discounted historical profile."
     )
+    independence: float | None = Field(
+        default=None,
+        ge=0.0,
+        le=1.0,
+        description="Optional graph-derived independence_ratio override (ADR-0007).",
+    )
 
 
 def create_app() -> FastAPI:
@@ -34,7 +40,11 @@ def create_app() -> FastAPI:
 
     @app.post("/v1/score", response_model=TrustResult)
     def score(request: ScoreRequest) -> TrustResult:
-        return score_claim(request.evidence, weights_for(historical=request.historical))
+        return score_claim(
+            request.evidence,
+            weights_for(historical=request.historical),
+            independence=request.independence,
+        )
 
     return app
 

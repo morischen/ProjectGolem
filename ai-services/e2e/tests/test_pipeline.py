@@ -7,8 +7,9 @@ retriever are stubbed, so this is hermetic and deterministic.
 
 import json
 
+import pytest
 from eip_claim import extract_claim
-from eip_evidence import Candidate, StubRetriever, gather
+from eip_evidence import Candidate, StubRetriever, assess_independence, gather
 from eip_evidence import EvidenceRelation as EvidenceRelationFromEvidence
 from eip_llm import StubLLMClient
 from eip_trust import Evidence as TrustEvidence
@@ -71,6 +72,28 @@ def test_conflicting_evidence_runs_through_to_mixed():
     )
     result = score_claim(_to_trust_evidence(gathered))
     assert result.verdict is Verdict.MIXED_EVIDENCE
+
+
+def test_citation_laundering_lowers_the_verdict_across_engines():
+    # Three distinct tier-2 sources, all supporting -> Verified on the naive count.
+    candidates = [
+        Candidate(id=sid, source_id=sid, source_tier=2, content="src", quality=0.9, freshness=0.8)
+        for sid in ("s1", "s2", "s3")
+    ]
+    gathered = gather(
+        CLAIM_TEXT,
+        retriever=StubRetriever(candidates),
+        llm=StubLLMClient([json.dumps({"relation": "supports"})] * 3),
+    )
+    trust_evidence = _to_trust_evidence(gathered)
+    assert score_claim(trust_evidence).verdict is Verdict.VERIFIED
+
+    # The knowledge graph reveals all three cite one origin -> laundered corroboration.
+    report = assess_independence(["s1", "s2", "s3"], [("s1", "o1"), ("s2", "o1"), ("s3", "o1")])
+    assert report.independence_ratio == pytest.approx(1 / 3)
+
+    downgraded = score_claim(trust_evidence, independence=report.independence_ratio)
+    assert downgraded.verdict is Verdict.LIKELY_TRUE  # not Verified once laundering is seen
 
 
 def test_evidence_relation_contract_is_identical_across_engines():

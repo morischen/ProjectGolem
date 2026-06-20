@@ -49,6 +49,12 @@ Decisions locked:
   resistance. **14/14 pytest tests pass** (determinism, weights-sum, formula
   fixtures, all six verdicts, Insufficient/Mixed as real outcomes, contradiction
   flips Verified→Mixed). Added root `.gitignore`.
+- **2026-06-19** — **Independence → Trust Engine wiring**: `score_claim` now accepts
+  an optional `independence` override (clamped) that replaces the count-based
+  heuristic with the graph-derived `independence_ratio` (ADR-0007); exposed on the
+  Trust Engine's `POST /v1/score` (`independence` field). End-to-end test proves
+  laundered corroboration (3 sources → 1 origin) flips **Verified → Likely True**.
+  trust-engine 49, e2e 4.
 - **2026-06-19** — **Real retrieval P3 — composite + env-wired API**:
   `CompositeRetriever` (merge + dedup by id, keep highest quality) +
   `build_retriever_from_env` (assembles Qdrant/Neo4j backends from `QDRANT_URL`/
@@ -208,8 +214,9 @@ Larger initiatives, not single mechanical loops — each needs its own scoping:
 - ✅ **Real retrieval backends — DONE** (P1 Qdrant semantic, P2 Neo4j graph +
   independence/citation-laundering, P3 composite + env-wired API + docker-compose
   docs). All hermetic in CI; live DBs validated via docker-compose. Remaining
-  follow-ups: a real embedding model, graph-schema seeding scripts, and feeding
-  `independence_ratio` into the Trust Engine's Independence component.
+  follow-ups: a real embedding model, graph-schema seeding scripts. (✅ feeding
+  `independence_ratio` into the Trust Engine is done — `score_claim(independence=...)`
+  + `/v1/score`; remaining is threading it through the gateway end to end.)
 - **Persistence & bitemporal verdicts** — Postgres-backed canonical claim/verdict
   records with versioned snapshots (INV-TEMPORAL); audit log.
 - **Real LLM enablement** — exercise `AnthropicLLMClient` end-to-end with an API
@@ -224,6 +231,9 @@ Larger initiatives, not single mechanical loops — each needs its own scoping:
 
 ## Loop log (append-only, newest first)
 
+- **2026-06-19** — Independence→Trust wiring loop: `score_claim(independence=...)`
+  override + `/v1/score` field + cross-engine e2e (laundering flips Verified→Likely
+  True). Verification: `./scripts/qa.sh` → trust 49, e2e 4, all green.
 - **2026-06-19** — Real retrieval P3 loop: CompositeRetriever + env-wired
   `/v1/gather` + docker-compose docs. Initiative #1 complete. Verification:
   `./scripts/qa.sh` → evidence-engine 29, all services green.
