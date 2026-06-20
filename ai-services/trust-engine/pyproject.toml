@@ -1,0 +1,30 @@
+[project]
+name = "eip-trust-engine"
+version = "0.0.1"
+description = "Deterministic Trust Engine for the Evidence Intelligence Platform (LLMs never score)."
+requires-python = ">=3.12"
+dependencies = ["pydantic>=2.6"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
+# uv installs default dependency-groups on `uv sync` (PEP 735). Kept in sync with
+# the [dev] extra above so both `uv` and `pip install -e ".[dev]"` work.
+[dependency-groups]
+dev = ["pytest>=8.0"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/eip_trust"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+addopts = "-ra"
+
+[tool.ruff]
+line-length = 100
+src = ["src", "tests"]

@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+#
+# Loop-engineering framework — soft PROGRESS.md reminder.
+#
+# Warns (does NOT block) when a commit does not stage PROGRESS.md. Every loop is
+# expected to record its outcome (Done / Failed / Next) in PROGRESS.md before
+# committing. See CLAUDE.md §2 (The Loop) and §8 (Git & commits).
+#
+# Activate once per clone:
+#   git config core.hooksPath scripts/git-hooks
+#
+set -euo pipefail
+
+staged="$(git diff --cached --name-only)"
+
+# Nothing staged (e.g. a merge commit) — nothing to check.
+if [ -z "$staged" ]; then
+  exit 0
+fi
+
+if ! printf '%s\n' "$staged" | grep -qx 'PROGRESS.md'; then
+  yellow='\033[33m'; reset='\033[0m'
+  printf '%b' "$yellow"
+  echo "⚠  PROGRESS.md was not updated in this commit."
+  echo "   The loop-engineering framework expects every loop to record its"
+  echo "   outcome (Done / Failed / Next) in PROGRESS.md. See CLAUDE.md §2."
+  echo "   This is a soft reminder — the commit will proceed."
+  printf '%b' "$reset"
+fi
+
+exit 0
