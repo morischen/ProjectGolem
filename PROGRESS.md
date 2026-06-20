@@ -49,6 +49,13 @@ Decisions locked:
   resistance. **14/14 pytest tests pass** (determinism, weights-sum, formula
   fixtures, all six verdicts, Insufficient/Mixed as real outcomes, contradiction
   flips Verified→Mixed). Added root `.gitignore`.
+- **2026-06-19** — **Persistence Q3 — persist verdicts + history API**: Trust Engine
+  `POST /v1/score` now persists an append-only versioned snapshot when a `claim_id`
+  is supplied and a store is configured (eip-persistence path dep; `knowledge_time`
+  stamped at the HTTP boundary, store stays pure). New read endpoints
+  `GET /v1/claims/{id}/verdicts` (history) and `/verdict` (latest). The append-only
+  history is the audit / calibration-ledger foundation. trust-engine 54.
+  **Initiative #2 (persistence & bitemporal verdicts) complete.**
 - **2026-06-19** — **Persistence Q2 — SQL adapter**: `SqlVerdictStore` (SQLAlchemy
   Core) implements `VerdictStore` over the same code on SQLite and Postgres;
   append-only with per-claim version computed in a transaction + unique constraint.
@@ -228,9 +235,9 @@ Larger initiatives, not single mechanical loops — each needs its own scoping:
   follow-ups: a real embedding model, graph-schema seeding scripts. (✅ feeding
   `independence_ratio` into the Trust Engine is done — `score_claim(independence=...)`
   + `/v1/score`; remaining is threading it through the gateway end to end.)
-- **Persistence & bitemporal verdicts** (in progress) — ✅ Q1 bitemporal store +
-  ✅ Q2 SQL adapter (SQLAlchemy; SQLite tests / Postgres prod). Remaining: **Q3**
-  audit log + persist each verdict in the pipeline (Trust Engine API → store).
+- ✅ **Persistence & bitemporal verdicts — DONE** (Q1 store + Q2 SQL adapter + Q3
+  persist-in-pipeline + history API). Follow-ups: a fuller action audit log (beyond
+  verdict history), and gateway passthrough of `claim_id` to `/v1/score`.
 - **Real LLM enablement** — exercise `AnthropicLLMClient` end-to-end with an API
   key behind a feature flag; calibration tests against the gold benchmark (§28).
 - **AuthN/Z + rate limiting** — OIDC, RBAC, MFA at the gateway (blueprint §22).
@@ -243,6 +250,9 @@ Larger initiatives, not single mechanical loops — each needs its own scoping:
 
 ## Loop log (append-only, newest first)
 
+- **2026-06-19** — Persistence Q3 loop: Trust Engine persists verdicts (claim_id +
+  store) + history/latest endpoints. Initiative #2 complete. Verification:
+  `./scripts/qa.sh` → trust 54, eip-persistence 13, all services green.
 - **2026-06-19** — Persistence Q2 loop: SqlVerdictStore (SQLAlchemy) tested on
   in-memory SQLite + make_postgres_store + docs. Verification: `./scripts/qa.sh` →
   eip-persistence 13, all services green.

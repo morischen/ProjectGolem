@@ -7,7 +7,11 @@ dependencies = [
     "fastapi>=0.110",
     "pydantic>=2.6",
     "uvicorn>=0.30",
+    "eip-persistence",
 ]
+
+[tool.uv.sources]
+eip-persistence = { path = "../libs/eip-persistence", editable = true }
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0"]
