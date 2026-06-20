@@ -49,6 +49,11 @@ Decisions locked:
   resistance. **14/14 pytest tests pass** (determinism, weights-sum, formula
   fixtures, all six verdicts, Insufficient/Mixed as real outcomes, contradiction
   flips Verified→Mixed). Added root `.gitignore`.
+- **2026-06-19** — **Persistence Q2 — SQL adapter**: `SqlVerdictStore` (SQLAlchemy
+  Core) implements `VerdictStore` over the same code on SQLite and Postgres;
+  append-only with per-claim version computed in a transaction + unique constraint.
+  Tested hermetically against in-memory SQLite (real SQL round-trip, no Docker);
+  `make_postgres_store` + docker-compose docs for production. eip-persistence: 13 tests.
 - **2026-06-19** — **Persistence Q1 — bitemporal verdict store**: new shared lib
   [eip-persistence](ai-services/libs/eip-persistence/) ([ADR-0008](docs/adr/0008-bitemporal-verdict-store.md))
   — append-only, versioned `VerdictRecord`s (frozen) behind a `VerdictStore` protocol
@@ -223,10 +228,9 @@ Larger initiatives, not single mechanical loops — each needs its own scoping:
   follow-ups: a real embedding model, graph-schema seeding scripts. (✅ feeding
   `independence_ratio` into the Trust Engine is done — `score_claim(independence=...)`
   + `/v1/score`; remaining is threading it through the gateway end to end.)
-- **Persistence & bitemporal verdicts** (in progress) — ✅ Q1 bitemporal store
-  abstraction + in-memory impl. Remaining: **Q2** Postgres adapter (SQLAlchemy,
-  tested on SQLite) + schema/docker-compose docs; **Q3** audit log + persist each
-  verdict in the pipeline.
+- **Persistence & bitemporal verdicts** (in progress) — ✅ Q1 bitemporal store +
+  ✅ Q2 SQL adapter (SQLAlchemy; SQLite tests / Postgres prod). Remaining: **Q3**
+  audit log + persist each verdict in the pipeline (Trust Engine API → store).
 - **Real LLM enablement** — exercise `AnthropicLLMClient` end-to-end with an API
   key behind a feature flag; calibration tests against the gold benchmark (§28).
 - **AuthN/Z + rate limiting** — OIDC, RBAC, MFA at the gateway (blueprint §22).
@@ -239,6 +243,9 @@ Larger initiatives, not single mechanical loops — each needs its own scoping:
 
 ## Loop log (append-only, newest first)
 
+- **2026-06-19** — Persistence Q2 loop: SqlVerdictStore (SQLAlchemy) tested on
+  in-memory SQLite + make_postgres_store + docs. Verification: `./scripts/qa.sh` →
+  eip-persistence 13, all services green.
 - **2026-06-19** — Persistence Q1 loop: bitemporal verdict store (eip-persistence,
   ADR-0008) — append-only/versioned, `as_of` queries. Verification: `./scripts/qa.sh`
   → eip-persistence 8, all services green.
