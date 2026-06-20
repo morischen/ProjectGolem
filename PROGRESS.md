@@ -49,6 +49,13 @@ Decisions locked:
   resistance. **14/14 pytest tests pass** (determinism, weights-sum, formula
   fixtures, all six verdicts, Insufficient/Mixed as real outcomes, contradiction
   flips Verified→Mixed). Added root `.gitignore`.
+- **2026-06-19** — **Real retrieval P1 — semantic/vector retriever**: added
+  retrieval seams ([ADR-0006](docs/adr/0006-retrieval-seams.md)) — `Embedder` +
+  `VectorStore` protocols with `StubEmbedder` and a `QdrantVectorStore` adapter
+  (`make_qdrant_store` factory; `qdrant-client` dep). `SemanticRetriever` embeds the
+  claim → vector search → `Candidate`s (similarity → quality), and is a drop-in
+  `Retriever` for `gather()`. Hermetic tests with a fake vector store (no live DB).
+  evidence-engine: 17 tests.
 - **2026-06-19** — **Dev ergonomics**: `scripts/dev.sh` (+ root `pnpm dev`) boots
   the whole stack on fixed ports (trust :8000, claim :8001, evidence :8002, gateway
   :4000, portal :3000) with Ctrl-C cleanup; portal page set to `force-dynamic` so
@@ -183,9 +190,11 @@ Pick the next initiative from Backlog when ready.
 
 Larger initiatives, not single mechanical loops — each needs its own scoping:
 
-- **Real retrieval backends** — implement `Retriever` against the data stores
-  (Neo4j graph traversal + Qdrant semantic search) behind the stub seam; add the
-  independence/citation-laundering graph analysis (§4 of the review).
+- **Real retrieval backends** (in progress) — ✅ P1 semantic/vector retriever
+  (Qdrant adapter) done. Remaining: **P2** Neo4j graph retriever + independence/
+  citation-laundering analysis (§4 of the review); **P3** composite multi-source
+  retriever wired into the evidence-engine API behind an env flag + docker-compose
+  validation docs.
 - **Persistence & bitemporal verdicts** — Postgres-backed canonical claim/verdict
   records with versioned snapshots (INV-TEMPORAL); audit log.
 - **Real LLM enablement** — exercise `AnthropicLLMClient` end-to-end with an API
@@ -200,6 +209,9 @@ Larger initiatives, not single mechanical loops — each needs its own scoping:
 
 ## Loop log (append-only, newest first)
 
+- **2026-06-19** — Real retrieval P1 loop: retrieval seams + SemanticRetriever +
+  Qdrant adapter (hermetic, fake store). Verification: `./scripts/qa.sh` →
+  evidence-engine 17, all services green.
 - **2026-06-19** — Dev-ergonomics: `scripts/dev.sh` / `pnpm dev` one-command stack
   runner + portal `force-dynamic`. Verified live path (gateway→trust-engine→portal)
   with real servers. `./scripts/qa.sh` green.

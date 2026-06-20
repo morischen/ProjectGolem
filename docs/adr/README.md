@@ -30,3 +30,4 @@ Routine, easily-reversed choices do not need an ADR — put those in code commen
 | [0003](0003-deterministic-trust-engine.md) | Deterministic Trust Engine — LLMs never score | Accepted |
 | [0004](0004-contract-codegen-toolchain.md) | Contract codegen toolchain (datamodel-code-generator) | Accepted |
 | [0005](0005-llm-recorded-wrapper.md) | LLM access via a recorded wrapper | Accepted |
+| [0006](0006-retrieval-seams.md) | Retrieval seams (Embedder / VectorStore / GraphStore) | Accepted |
