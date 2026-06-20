@@ -9,6 +9,7 @@ dependencies = [
     "fastapi>=0.110",
     "uvicorn>=0.30",
     "qdrant-client>=1.7",
+    "neo4j>=5.0",
 ]
 
 [tool.uv.sources]

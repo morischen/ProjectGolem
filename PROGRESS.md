@@ -49,6 +49,14 @@ Decisions locked:
   resistance. **14/14 pytest tests pass** (determinism, weights-sum, formula
   fixtures, all six verdicts, Insufficient/Mixed as real outcomes, contradiction
   flips Verified→Mixed). Added root `.gitignore`.
+- **2026-06-19** — **Real retrieval P2 — graph retriever + independence analysis**:
+  `GraphStore` seam + `Neo4jGraphStore` adapter (`make_neo4j_store`; `neo4j` dep) +
+  `GraphRetriever` (drop-in `Retriever`). Plus the differentiator
+  ([ADR-0007](docs/adr/0007-independence-citation-laundering.md)):
+  `assess_independence` groups sources into provenance clusters (weakly-connected
+  components of the citation graph) so shared-origin / citation-cycle "corroboration"
+  is detected — `independence_ratio` < 1 means laundered. Pure + hermetic.
+  evidence-engine: 25 tests.
 - **2026-06-19** — **Real retrieval P1 — semantic/vector retriever**: added
   retrieval seams ([ADR-0006](docs/adr/0006-retrieval-seams.md)) — `Embedder` +
   `VectorStore` protocols with `StubEmbedder` and a `QdrantVectorStore` adapter
@@ -191,10 +199,9 @@ Pick the next initiative from Backlog when ready.
 Larger initiatives, not single mechanical loops — each needs its own scoping:
 
 - **Real retrieval backends** (in progress) — ✅ P1 semantic/vector retriever
-  (Qdrant adapter) done. Remaining: **P2** Neo4j graph retriever + independence/
-  citation-laundering analysis (§4 of the review); **P3** composite multi-source
-  retriever wired into the evidence-engine API behind an env flag + docker-compose
-  validation docs.
+  (Qdrant), ✅ P2 graph retriever (Neo4j) + independence/citation-laundering
+  analysis. Remaining: **P3** composite multi-source retriever (merge + dedup) wired
+  into the evidence-engine API behind an env flag + docker-compose validation docs.
 - **Persistence & bitemporal verdicts** — Postgres-backed canonical claim/verdict
   records with versioned snapshots (INV-TEMPORAL); audit log.
 - **Real LLM enablement** — exercise `AnthropicLLMClient` end-to-end with an API
@@ -209,6 +216,8 @@ Larger initiatives, not single mechanical loops — each needs its own scoping:
 
 ## Loop log (append-only, newest first)
 
+- **2026-06-19** — Real retrieval P2 loop: Neo4j graph retriever + independence
+  analysis (ADR-0007). Verification: `./scripts/qa.sh` → evidence-engine 25, all green.
 - **2026-06-19** — Real retrieval P1 loop: retrieval seams + SemanticRetriever +
   Qdrant adapter (hermetic, fake store). Verification: `./scripts/qa.sh` →
   evidence-engine 17, all services green.
