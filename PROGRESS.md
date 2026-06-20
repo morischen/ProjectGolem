@@ -49,6 +49,13 @@ Decisions locked:
   resistance. **14/14 pytest tests pass** (determinism, weights-sum, formula
   fixtures, all six verdicts, Insufficient/Mixed as real outcomes, contradiction
   flips Verified→Mixed). Added root `.gitignore`.
+- **2026-06-19** — **web/ + infra scaffolding**: pnpm workspace; `@eip/contracts`
+  TS types generated from `contracts/` (TS half of ADR-0004, `pnpm gen:contracts`);
+  Fastify **api-gateway** (`/health`, `/v1/info`) consuming the generated `Verdict`
+  type, with vitest tests; `infra/docker-compose.yml` for Neo4j/Qdrant/Postgres/
+  MinIO. QA gate + CI extended to the web workspace. Next.js **portal deferred**.
+  QA green: web typecheck + 2 tests + prettier; full `./scripts/qa.sh` passes both
+  stacks.
 - **2026-06-19** — **Gold-benchmark harness stub** (§28): `eip_trust.benchmark`
   with a `BenchmarkItem` model (strata tags, matched-pair id), a JSON loader, and a
   runner computing verdict accuracy (overall + per difficulty) + a calibration-error
@@ -100,9 +107,14 @@ Decisions locked:
 
 In priority order. Each is one loop unless noted.
 
-1. **Repo scaffolding (remaining)** — `web/` (Fastify gateway + Next.js portal)
-   with TS codegen from `contracts/` (ADR-0004), `infra/docker-compose.yml` for the
-   four data stores, and the `pnpm` workspace.
+1. **Public portal** — Next.js app in `web/portal`: read-only transparency surface
+   (evidence graph, contradictions, confidence breakdown, strongest-opposing-
+   evidence view), consuming `@eip/contracts` types. Deferred from the web loop.
+2. **Claim Engine vertical** — first consumer of `claim.schema.json`: extraction
+   + entity/event recognition + claim-type classification (LLM via the recorded
+   wrapper; never scores).
+3. **Wire gateway → Trust Engine** — gateway calls the Python scoring service
+   (HTTP), returning a `TrustResult`; end-to-end claim→verdict path.
 
 ---
 
@@ -118,6 +130,10 @@ In priority order. Each is one loop unless noted.
 
 ## Loop log (append-only, newest first)
 
+- **2026-06-19** — web/ + infra scaffolding loop (autonomous session): pnpm
+  workspace, `@eip/contracts` TS codegen, Fastify api-gateway (+vitest),
+  docker-compose; QA + CI extended to web. Portal deferred. Verification:
+  `./scripts/qa.sh` → Python (41 tests/smoke/bench) + web (typecheck/2 tests/fmt).
 - **2026-06-19** — Gold-benchmark harness stub loop (autonomous session): item
   model + loader + runner (verdict accuracy + calibration stub) + 9-item seed +
   `make bench`. Verification: `./scripts/qa.sh` → 41 tests, smoke OK, bench 100%.

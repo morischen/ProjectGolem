@@ -20,5 +20,13 @@ for svc in "${PY_SERVICES[@]}"; do
   ( cd "$root/$svc" && make qa )
 done
 
+# TypeScript workspace (web/): typecheck + tests + format check.
+if [ -f "$root/pnpm-workspace.yaml" ]; then
+  echo "==================================================================="
+  echo "QA: web (pnpm workspace)"
+  echo "==================================================================="
+  ( cd "$root" && pnpm -r typecheck && pnpm -r test && pnpm format:check )
+fi
+
 echo
 echo "✅ ALL QA PASSED"

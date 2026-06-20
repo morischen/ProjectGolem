@@ -1,0 +1,15 @@
+{
+  "name": "eip",
+  "private": true,
+  "packageManager": "pnpm@10.33.0",
+  "scripts": {
+    "gen:contracts": "pnpm --filter @eip/contracts gen",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "format:check": "prettier --check \"web/**/*.{ts,mjs,json}\"",
+    "format:write": "prettier --write \"web/**/*.{ts,mjs,json}\""
+  },
+  "devDependencies": {
+    "prettier": "^3.3.0"
+  }
+}
