@@ -49,6 +49,11 @@ Decisions locked:
   resistance. **14/14 pytest tests pass** (determinism, weights-sum, formula
   fixtures, all six verdicts, Insufficient/Mixed as real outcomes, contradiction
   flips Verified→Mixed). Added root `.gitignore`.
+- **2026-06-19** — **Public portal** (Next.js, `web/portal`): read-only
+  transparency surface — `VerdictCard` shows the verdict, full confidence
+  breakdown, and the *strongest opposing evidence* (FR-008), typed against
+  `@eip/contracts` (presentation only, no scoring). vitest + Testing Library
+  (3 tests). QA green across both stacks.
 - **2026-06-19** — **web/ + infra scaffolding**: pnpm workspace; `@eip/contracts`
   TS types generated from `contracts/` (TS half of ADR-0004, `pnpm gen:contracts`);
   Fastify **api-gateway** (`/health`, `/v1/info`) consuming the generated `Verdict`
@@ -107,14 +112,14 @@ Decisions locked:
 
 In priority order. Each is one loop unless noted.
 
-1. **Public portal** — Next.js app in `web/portal`: read-only transparency surface
-   (evidence graph, contradictions, confidence breakdown, strongest-opposing-
-   evidence view), consuming `@eip/contracts` types. Deferred from the web loop.
+1. **Wire gateway → Trust Engine** — expose the Trust Engine over HTTP (FastAPI)
+   and have the gateway call it (`POST /v1/score` → `TrustResult`); first
+   end-to-end path. Then point the portal at live data instead of sample data.
 2. **Claim Engine vertical** — first consumer of `claim.schema.json`: extraction
    + entity/event recognition + claim-type classification (LLM via the recorded
    wrapper; never scores).
-3. **Wire gateway → Trust Engine** — gateway calls the Python scoring service
-   (HTTP), returning a `TrustResult`; end-to-end claim→verdict path.
+3. **Portal depth** — evidence graph view, contradictions panel, appeal entry;
+   accessibility pass.
 
 ---
 
@@ -130,6 +135,10 @@ In priority order. Each is one loop unless noted.
 
 ## Loop log (append-only, newest first)
 
+- **2026-06-19** — Public portal loop (autonomous session): Next.js `web/portal`
+  with a typed `VerdictCard` transparency component + Testing Library tests.
+  Verification: `./scripts/qa.sh` → Python (41/smoke/bench) + web (gateway 2,
+  portal 3, typecheck, prettier).
 - **2026-06-19** — web/ + infra scaffolding loop (autonomous session): pnpm
   workspace, `@eip/contracts` TS codegen, Fastify api-gateway (+vitest),
   docker-compose; QA + CI extended to web. Portal deferred. Verification:

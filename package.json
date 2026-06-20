@@ -6,8 +6,8 @@
     "gen:contracts": "pnpm --filter @eip/contracts gen",
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm -r test",
-    "format:check": "prettier --check \"web/**/*.{ts,mjs,json}\"",
-    "format:write": "prettier --write \"web/**/*.{ts,mjs,json}\""
+    "format:check": "prettier --check \"web/**/*.{ts,tsx,mjs,json}\"",
+    "format:write": "prettier --write \"web/**/*.{ts,tsx,mjs,json}\""
   },
   "devDependencies": {
     "prettier": "^3.3.0"
