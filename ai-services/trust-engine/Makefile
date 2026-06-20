@@ -1,5 +1,5 @@
 # Trust Engine tasks. Requires uv (ADR-0002).
-.PHONY: gen lint typecheck test smoke bench qa
+.PHONY: gen lint typecheck test smoke bench serve qa
 
 # Regenerate Pydantic contract models from ../../contracts (ADR-0004).
 # Do not hand-edit src/eip_trust/_generated/ — edit the schema and run `make gen`.
@@ -31,6 +31,10 @@ smoke:
 # Run the seed gold-benchmark (golden fixtures); fails if accuracy < 100%.
 bench:
 	uv run python scripts/run_benchmark.py
+
+# Run the HTTP service locally.
+serve:
+	uv run uvicorn eip_trust.api:app --reload
 
 # Full per-service gate: lint + types + tests + runtime smoke + benchmark.
 qa: lint typecheck test smoke bench

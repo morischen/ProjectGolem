@@ -49,6 +49,11 @@ Decisions locked:
   resistance. **14/14 pytest tests pass** (determinism, weights-sum, formula
   fixtures, all six verdicts, Insufficient/Mixed as real outcomes, contradiction
   flips Verified→Mixed). Added root `.gitignore`.
+- **2026-06-19** — **Trust Engine HTTP surface** (FastAPI, `eip_trust.api`):
+  `GET /health` + `POST /v1/score` ({evidence[], historical}) → `TrustResult`.
+  Thin transport over the deterministic scorer (still no scoring in the API layer,
+  INV-DETERMINISM); `make serve` runs it via uvicorn. TestClient tests (in-process,
+  no server). QA green: 46 Python tests + web.
 - **2026-06-19** — **Public portal** (Next.js, `web/portal`): read-only
   transparency surface — `VerdictCard` shows the verdict, full confidence
   breakdown, and the *strongest opposing evidence* (FR-008), typed against
@@ -112,9 +117,9 @@ Decisions locked:
 
 In priority order. Each is one loop unless noted.
 
-1. **Wire gateway → Trust Engine** — expose the Trust Engine over HTTP (FastAPI)
-   and have the gateway call it (`POST /v1/score` → `TrustResult`); first
-   end-to-end path. Then point the portal at live data instead of sample data.
+1. **Gateway → Trust Engine call** — the Python scorer is live (FastAPI
+   `POST /v1/score`); now have the Fastify gateway proxy to it and the portal read
+   live data instead of `lib/sample.ts`. Add a typed client + an integration test.
 2. **Claim Engine vertical** — first consumer of `claim.schema.json`: extraction
    + entity/event recognition + claim-type classification (LLM via the recorded
    wrapper; never scores).
@@ -135,6 +140,9 @@ In priority order. Each is one loop unless noted.
 
 ## Loop log (append-only, newest first)
 
+- **2026-06-19** — Trust Engine HTTP surface loop (autonomous session): FastAPI
+  `eip_trust.api` (/health, /v1/score) + TestClient tests + `make serve`.
+  Verification: `./scripts/qa.sh` → 46 Python tests + web; live POST /v1/score 200.
 - **2026-06-19** — Public portal loop (autonomous session): Next.js `web/portal`
   with a typed `VerdictCard` transparency component + Testing Library tests.
   Verification: `./scripts/qa.sh` → Python (41/smoke/bench) + web (gateway 2,
