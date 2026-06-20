@@ -38,7 +38,9 @@ def _mean(values: Sequence[float]) -> float:
     return sum(values) / len(values) if values else 0.0
 
 
-def _insufficient(weights: ScoringWeights, relevant: int, supporting: int, contradicting: int) -> TrustResult:
+def _insufficient(
+    weights: ScoringWeights, relevant: int, supporting: int, contradicting: int
+) -> TrustResult:
     return TrustResult(
         score=0.0,
         verdict=Verdict.INSUFFICIENT_EVIDENCE,

@@ -50,11 +50,7 @@ def contradicts(n: int, **kw) -> list[Evidence]:
 def test_default_weights_sum_to_one():
     w = DEFAULT_WEIGHTS
     total = (
-        w.source_reliability
-        + w.corroboration
-        + w.evidence_quality
-        + w.independence
-        + w.freshness
+        w.source_reliability + w.corroboration + w.evidence_quality + w.independence + w.freshness
     )
     assert total == pytest.approx(1.0)
 
@@ -156,8 +152,7 @@ def test_adding_contradiction_moves_verified_to_mixed():
 def test_single_source_repetition_does_not_reach_verified():
     """Three 'supports' all laundered through one source must not be Verified."""
     same_source = [
-        ev(f"s{i}", EvidenceRelation.SUPPORTS, source_id="only-one", tier=1)
-        for i in range(3)
+        ev(f"s{i}", EvidenceRelation.SUPPORTS, source_id="only-one", tier=1) for i in range(3)
     ]
     result = score_claim(same_source)
     assert result.verdict is Verdict.LIKELY_TRUE  # not VERIFIED

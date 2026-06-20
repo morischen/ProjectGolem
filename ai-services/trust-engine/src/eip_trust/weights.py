@@ -33,11 +33,15 @@ class ScoringWeights(BaseModel):
     )
 
     # Verdict-mapping thresholds.
-    strength_floor: float = Field(0.30, ge=0.0, le=1.0, description="Below this strength -> Insufficient.")
+    strength_floor: float = Field(
+        0.30, ge=0.0, le=1.0, description="Below this strength -> Insufficient."
+    )
     mixed_conflict_threshold: float = Field(
         0.35, ge=0.0, le=0.5, description="Min minority-mass share -> Mixed Evidence."
     )
-    verified_threshold: float = Field(0.80, ge=0.0, le=1.0, description="At/above -> Verified or False.")
+    verified_threshold: float = Field(
+        0.80, ge=0.0, le=1.0, description="At/above -> Verified or False."
+    )
 
     @model_validator(mode="after")
     def _weights_sum_to_one(self) -> ScoringWeights:

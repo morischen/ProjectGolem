@@ -49,6 +49,11 @@ Decisions locked:
   resistance. **14/14 pytest tests pass** (determinism, weights-sum, formula
   fixtures, all six verdicts, Insufficient/Mixed as real outcomes, contradiction
   flips Verified→Mixed). Added root `.gitignore`.
+- **2026-06-19** — **Dev-tooling lane**: added `ruff` + `mypy --strict` (pydantic
+  plugin) as dev deps with config; a reusable QA gate (`scripts/qa.sh` →
+  per-service `make qa` = lint + typecheck + test + smoke), a runtime smoke check
+  (`scripts/smoke.py`), and GitHub Actions CI (`.github/workflows/ci.yml`,
+  incl. codegen-drift check). Gate green: ruff/mypy clean, 21 tests, smoke OK.
 - **2026-06-19** — **Contracts v0**: authored [contracts/](contracts/) JSON
   Schemas (evidence, verdict, claim) as the source of truth; chose
   datamodel-code-generator ([ADR-0004](docs/adr/0004-contract-codegen-toolchain.md))
@@ -61,7 +66,8 @@ Decisions locked:
 
 ## 🔄 In progress
 
-- _Nothing in flight._
+- **Autonomous loop session** (owner directive): after each loop run tests + QA
+  (ruff/mypy) + smoke, then commit & push, then continue. Working the Next list.
 
 ---
 
@@ -83,16 +89,13 @@ Decisions locked:
 
 In priority order. Each is one loop unless noted.
 
-1. **Dev-tooling lane** — add `ruff` + `mypy` as dev deps and wire `make lint` /
-   typecheck (currently referenced but not installed); add a CI workflow running
-   `uv run pytest` + lint. Low effort, closes the verification gap.
-2. **Trust Engine hardening** — calibration/golden-fixture tests tied to the gold
+1. **Trust Engine hardening** — calibration/golden-fixture tests tied to the gold
    benchmark (§28); consider freshness-from-dates and domain/claim-type-aware
    weights (blueprint §10/§23).
-3. **Gold-benchmark harness stub** — schema + loader for benchmark items
+2. **Gold-benchmark harness stub** — schema + loader for benchmark items
    (spec §28) so L0 gates (G0.x) become measurable early; wire ECE against the
    Trust Engine.
-4. **Repo scaffolding (remaining)** — `web/` (Fastify gateway + Next.js portal)
+3. **Repo scaffolding (remaining)** — `web/` (Fastify gateway + Next.js portal)
    with TS codegen from `contracts/` (ADR-0004), `infra/docker-compose.yml` for the
    four data stores, and the `pnpm` workspace.
 
@@ -110,6 +113,9 @@ In priority order. Each is one loop unless noted.
 
 ## Loop log (append-only, newest first)
 
+- **2026-06-19** — Dev-tooling lane loop (autonomous session): ruff + mypy strict
+  + reusable QA gate (`scripts/qa.sh`) + smoke + CI. Verification:
+  `./scripts/qa.sh` → ruff/format/mypy clean, 21 tests, smoke verdict=Verified.
 - **2026-06-19** — Contracts v0 loop: `contracts/` JSON Schemas + ADR-0004 +
   generated Pydantic models (`make gen`) + engine migration to a facade +
   jsonschema conformance tests. Verification: `uv run pytest` → **21 passed**.

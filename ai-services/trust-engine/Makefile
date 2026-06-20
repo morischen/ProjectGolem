@@ -1,5 +1,5 @@
 # Trust Engine tasks. Requires uv (ADR-0002).
-.PHONY: gen test lint
+.PHONY: gen lint typecheck test smoke qa
 
 # Regenerate Pydantic contract models from ../../contracts (ADR-0004).
 # Do not hand-edit src/eip_trust/_generated/ — edit the schema and run `make gen`.
@@ -15,8 +15,18 @@ gen:
 			--output src/eip_trust/_generated/$$s.py; \
 	done
 
+lint:
+	uv run ruff check .
+	uv run ruff format --check .
+
+typecheck:
+	uv run mypy
+
 test:
 	uv run pytest
 
-lint:
-	uv run ruff check .
+smoke:
+	uv run python scripts/smoke.py
+
+# Full per-service gate: lint + types + tests + runtime smoke.
+qa: lint typecheck test smoke
