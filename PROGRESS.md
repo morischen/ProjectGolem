@@ -49,6 +49,12 @@ Decisions locked:
   resistance. **14/14 pytest tests pass** (determinism, weights-sum, formula
   fixtures, all six verdicts, Insufficient/Mixed as real outcomes, contradiction
   flips Verified→Mixed). Added root `.gitignore`.
+- **2026-06-19** — **Gold-benchmark harness stub** (§28): `eip_trust.benchmark`
+  with a `BenchmarkItem` model (strata tags, matched-pair id), a JSON loader, and a
+  runner computing verdict accuracy (overall + per difficulty) + a calibration-error
+  stub. Seed set of 9 labeled items (all verdicts + a matched framing pair + a
+  historical case) doubles as golden fixtures; wired into the QA gate (`make bench`,
+  fails if accuracy < 100%). QA green: 41 tests, smoke OK, bench 100%.
 - **2026-06-19** — **Trust Engine hardening**: added a pure `freshness_from_age_days`
   helper (exponential decay, no clock — stays deterministic) and claim-type/domain
   weight **profiles** (`weights_for`, `HISTORICAL_WEIGHTS` discounts freshness for
@@ -94,10 +100,7 @@ Decisions locked:
 
 In priority order. Each is one loop unless noted.
 
-1. **Gold-benchmark harness stub** — schema + loader for benchmark items
-   (spec §28) + golden fixtures, so L0 gates (G0.x) become measurable early; wire
-   verdict-accuracy and ECE-style calibration against the Trust Engine.
-2. **Repo scaffolding (remaining)** — `web/` (Fastify gateway + Next.js portal)
+1. **Repo scaffolding (remaining)** — `web/` (Fastify gateway + Next.js portal)
    with TS codegen from `contracts/` (ADR-0004), `infra/docker-compose.yml` for the
    four data stores, and the `pnpm` workspace.
 
@@ -115,6 +118,9 @@ In priority order. Each is one loop unless noted.
 
 ## Loop log (append-only, newest first)
 
+- **2026-06-19** — Gold-benchmark harness stub loop (autonomous session): item
+  model + loader + runner (verdict accuracy + calibration stub) + 9-item seed +
+  `make bench`. Verification: `./scripts/qa.sh` → 41 tests, smoke OK, bench 100%.
 - **2026-06-19** — Trust Engine hardening loop (autonomous session):
   freshness-from-age helper + versioned weight profiles (default/historical).
   Verification: `./scripts/qa.sh` → 30 tests, ruff/mypy clean, smoke OK.

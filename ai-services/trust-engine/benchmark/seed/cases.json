@@ -1,0 +1,108 @@
+[
+  {
+    "id": "verified-strong",
+    "claim_text": "A well-documented event corroborated by three independent primary sources.",
+    "expected_verdict": "Verified",
+    "difficulty": "tractable",
+    "expected_band": "high",
+    "evidence": [
+      {"id": "e1", "source_id": "s1", "source_tier": 1, "relation": "supports", "quality": 1.0, "freshness": 1.0},
+      {"id": "e2", "source_id": "s2", "source_tier": 1, "relation": "supports", "quality": 1.0, "freshness": 1.0},
+      {"id": "e3", "source_id": "s3", "source_tier": 1, "relation": "supports", "quality": 1.0, "freshness": 1.0}
+    ]
+  },
+  {
+    "id": "false-strong",
+    "claim_text": "A claim refuted by three independent primary sources.",
+    "expected_verdict": "False",
+    "difficulty": "tractable",
+    "expected_band": "high",
+    "evidence": [
+      {"id": "e1", "source_id": "s1", "source_tier": 1, "relation": "contradicts", "quality": 1.0, "freshness": 1.0},
+      {"id": "e2", "source_id": "s2", "source_tier": 1, "relation": "contradicts", "quality": 1.0, "freshness": 1.0},
+      {"id": "e3", "source_id": "s3", "source_tier": 1, "relation": "contradicts", "quality": 1.0, "freshness": 1.0}
+    ]
+  },
+  {
+    "id": "mixed-balanced",
+    "claim_text": "Substantial, credible evidence exists on both sides.",
+    "expected_verdict": "Mixed Evidence",
+    "difficulty": "hard",
+    "evidence": [
+      {"id": "e1", "source_id": "s1", "source_tier": 1, "relation": "supports", "quality": 1.0, "freshness": 1.0},
+      {"id": "e2", "source_id": "s2", "source_tier": 1, "relation": "supports", "quality": 1.0, "freshness": 1.0},
+      {"id": "e3", "source_id": "s3", "source_tier": 1, "relation": "contradicts", "quality": 1.0, "freshness": 1.0},
+      {"id": "e4", "source_id": "s4", "source_tier": 1, "relation": "contradicts", "quality": 1.0, "freshness": 1.0}
+    ]
+  },
+  {
+    "id": "insufficient-weak",
+    "claim_text": "Only a single weak, low-tier emerging source.",
+    "expected_verdict": "Insufficient Evidence",
+    "difficulty": "undecidable",
+    "evidence": [
+      {"id": "e1", "source_id": "s1", "source_tier": 4, "relation": "supports", "quality": 0.1, "freshness": 0.0}
+    ]
+  },
+  {
+    "id": "likely-true",
+    "claim_text": "Two moderate context sources lean in favor.",
+    "expected_verdict": "Likely True",
+    "difficulty": "tractable",
+    "expected_band": "medium",
+    "evidence": [
+      {"id": "e1", "source_id": "s1", "source_tier": 3, "relation": "supports", "quality": 0.6, "freshness": 0.5},
+      {"id": "e2", "source_id": "s2", "source_tier": 3, "relation": "supports", "quality": 0.6, "freshness": 0.5}
+    ]
+  },
+  {
+    "id": "likely-false",
+    "claim_text": "Two moderate context sources lean against.",
+    "expected_verdict": "Likely False",
+    "difficulty": "tractable",
+    "expected_band": "medium",
+    "evidence": [
+      {"id": "e1", "source_id": "s1", "source_tier": 3, "relation": "contradicts", "quality": 0.6, "freshness": 0.5},
+      {"id": "e2", "source_id": "s2", "source_tier": 3, "relation": "contradicts", "quality": 0.6, "freshness": 0.5}
+    ]
+  },
+  {
+    "id": "framing-alpha",
+    "claim_text": "[Actor X] did [event] to [Target Y].",
+    "expected_verdict": "Verified",
+    "difficulty": "tractable",
+    "expected_band": "high",
+    "framing_pair_id": "fp1",
+    "evidence": [
+      {"id": "e1", "source_id": "s1", "source_tier": 1, "relation": "supports", "quality": 1.0, "freshness": 1.0},
+      {"id": "e2", "source_id": "s2", "source_tier": 1, "relation": "supports", "quality": 1.0, "freshness": 1.0},
+      {"id": "e3", "source_id": "s3", "source_tier": 1, "relation": "supports", "quality": 1.0, "freshness": 1.0}
+    ]
+  },
+  {
+    "id": "framing-beta",
+    "claim_text": "[Target Y] suffered [event]; was [Actor X] responsible?",
+    "expected_verdict": "Verified",
+    "difficulty": "tractable",
+    "expected_band": "high",
+    "framing_pair_id": "fp1",
+    "evidence": [
+      {"id": "e1", "source_id": "s1", "source_tier": 1, "relation": "supports", "quality": 1.0, "freshness": 1.0},
+      {"id": "e2", "source_id": "s2", "source_tier": 1, "relation": "supports", "quality": 1.0, "freshness": 1.0},
+      {"id": "e3", "source_id": "s3", "source_tier": 1, "relation": "supports", "quality": 1.0, "freshness": 1.0}
+    ]
+  },
+  {
+    "id": "historical-old-strong",
+    "claim_text": "A settled historical event evidenced by old but strong primary sources.",
+    "expected_verdict": "Verified",
+    "difficulty": "tractable",
+    "expected_band": "high",
+    "historical": true,
+    "evidence": [
+      {"id": "e1", "source_id": "s1", "source_tier": 1, "relation": "supports", "quality": 1.0, "freshness": 0.0},
+      {"id": "e2", "source_id": "s2", "source_tier": 1, "relation": "supports", "quality": 1.0, "freshness": 0.0},
+      {"id": "e3", "source_id": "s3", "source_tier": 1, "relation": "supports", "quality": 1.0, "freshness": 0.0}
+    ]
+  }
+]
