@@ -9,7 +9,7 @@ lives in the Python Trust Engine; INV-DETERMINISM).
 |---------|------|--------|
 | `packages/contracts` (`@eip/contracts`) | TS types generated from `contracts/*.schema.json` (ADR-0004) | done |
 | `api-gateway` (`@eip/api-gateway`) | Fastify HTTP entry: auth/routing/orchestration | health + info + `/v1/score` proxy to the Trust Engine (`TRUST_ENGINE_URL`) |
-| `portal` (`@eip/portal`) | Next.js public transparency UI | VerdictCard (verdict + breakdown + opposing evidence), sample data |
+| `portal` (`@eip/portal`) | Next.js public transparency UI | VerdictCard; fetches live verdict from gateway (`GATEWAY_URL`) with static fallback |
 
 ## Common tasks (run from repo root)
 ```bash

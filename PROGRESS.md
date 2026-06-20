@@ -49,6 +49,11 @@ Decisions locked:
   resistance. **14/14 pytest tests pass** (determinism, weights-sum, formula
   fixtures, all six verdicts, Insufficient/Mixed as real outcomes, contradiction
   flips Verified→Mixed). Added root `.gitignore`.
+- **2026-06-19** — **Portal → live data**: `fetchVerdict` (server-side) calls the
+  gateway `POST /v1/score` (`GATEWAY_URL`) and renders the result, with a static
+  `sample.ts` fallback when the gateway is unreachable (keeps tests/`next build`
+  hermetic). The full path is now demoable: portal → gateway → FastAPI → engine.
+  QA green: portal 6 tests (+gateway 5, Python 46).
 - **2026-06-19** — **Gateway → Trust Engine wiring**: typed `ScorerClient` +
   `POST /v1/score` proxy route on the Fastify gateway (`TRUST_ENGINE_URL`,
   default :8000). Gateway validates + forwards, never scores (INV-DETERMINISM);
@@ -122,15 +127,12 @@ Decisions locked:
 
 In priority order. Each is one loop unless noted.
 
-1. **Portal → live data** — have the Next.js portal fetch a verdict from the
-   gateway (`/v1/score`) instead of `lib/sample.ts` (server component fetch);
-   keep a static fallback for tests.
-2. **Claim Engine vertical** — first consumer of `claim.schema.json`: extraction
+1. **Claim Engine vertical** — first consumer of `claim.schema.json`: extraction
    + entity/event recognition + claim-type classification (LLM via the recorded
    wrapper; never scores).
-3. **Portal depth** — evidence graph view, contradictions panel, appeal entry;
+2. **Portal depth** — evidence graph view, contradictions panel, appeal entry;
    accessibility pass.
-4. **End-to-end integration test** — optional real round-trip (spin up FastAPI +
+3. **End-to-end integration test** — optional real round-trip (spin up FastAPI +
    gateway) in CI, complementing the mocked unit tests.
 
 ---
@@ -147,6 +149,9 @@ In priority order. Each is one loop unless noted.
 
 ## Loop log (append-only, newest first)
 
+- **2026-06-19** — Portal→live-data loop: `fetchVerdict` (gateway call + static
+  fallback) wired into the page; mocked-fetch tests (live / unreachable / non-2xx).
+  Verification: `./scripts/qa.sh` → Python 46 + gateway 5 + portal 6, typecheck/fmt.
 - **2026-06-19** — Gateway→engine wiring loop (autonomous session): ScorerClient +
   `/v1/score` proxy + mocked-fetch integration tests (happy/400/502). Verification:
   `./scripts/qa.sh` → Python 46 + gateway 5 + portal 3, typecheck + prettier.
