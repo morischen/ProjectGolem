@@ -49,6 +49,10 @@ Decisions locked:
   resistance. **14/14 pytest tests pass** (determinism, weights-sum, formula
   fixtures, all six verdicts, Insufficient/Mixed as real outcomes, contradiction
   flips Verified→Mixed). Added root `.gitignore`.
+- **2026-06-19** — **Portal depth**: added a `ContradictionsPanel` (opposing
+  evidence surfaced first-class, with count + empty state) and an `AppealEntry`
+  affordance (states appeals are logged publicly), both with accessible
+  `region`/`button` roles and vitest tests. Wired into the page. Portal: 10 tests.
 - **2026-06-19** — **Evidence Engine HTTP + gateway wiring**: FastAPI
   `eip_evidence.api` (`/health`, `POST /v1/gather` {claim_text, candidates} →
   `Evidence[]`) with injectable LLM (`make serve`, port 8002). Gateway gains a typed
@@ -160,9 +164,7 @@ Decisions locked:
 
 In priority order. Each is one loop unless noted.
 
-1. **Portal depth** — contradictions panel + appeal-entry affordance on the
-   transparency surface; accessibility pass (roles/labels). Tested with vitest.
-2. **End-to-end integration test** — cross-engine round-trip in one process
+1. **End-to-end integration test** — cross-engine round-trip in one process
    (claim → evidence → trust via JSON), proving the independently-generated
    contracts line up.
 
@@ -180,6 +182,9 @@ In priority order. Each is one loop unless noted.
 
 ## Loop log (append-only, newest first)
 
+- **2026-06-19** — Portal depth loop (autonomous session): ContradictionsPanel +
+  AppealEntry components with accessibility roles + vitest tests; wired into page.
+  Verification: `./scripts/qa.sh` → portal 10, all services green.
 - **2026-06-19** — Evidence Engine HTTP + gateway wiring loop (autonomous session):
   FastAPI `/v1/gather` (DI'd LLM) + gateway `EvidenceClient`/proxy + mocked tests.
   Verification: `./scripts/qa.sh` → trust 46 + claim 15 + evidence 12 + gateway 11

@@ -1,3 +1,5 @@
+import { AppealEntry } from "../components/AppealEntry";
+import { ContradictionsPanel } from "../components/ContradictionsPanel";
 import { VerdictCard } from "../components/VerdictCard";
 import { fetchVerdict } from "../lib/gateway";
 
@@ -18,6 +20,8 @@ export default async function Home() {
         </small>
       </p>
       <VerdictCard result={result} evidence={evidence} />
+      <ContradictionsPanel evidence={evidence} />
+      <AppealEntry />
     </main>
   );
 }
