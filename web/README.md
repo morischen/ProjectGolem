@@ -8,7 +8,7 @@ lives in the Python Trust Engine; INV-DETERMINISM).
 | Package | Role | Status |
 |---------|------|--------|
 | `packages/contracts` (`@eip/contracts`) | TS types generated from `contracts/*.schema.json` (ADR-0004) | done |
-| `api-gateway` (`@eip/api-gateway`) | Fastify HTTP entry: auth/routing/orchestration | health + info routes |
+| `api-gateway` (`@eip/api-gateway`) | Fastify HTTP entry: auth/routing/orchestration | health + info + `/v1/score` proxy to the Trust Engine (`TRUST_ENGINE_URL`) |
 | `portal` (`@eip/portal`) | Next.js public transparency UI | VerdictCard (verdict + breakdown + opposing evidence), sample data |
 
 ## Common tasks (run from repo root)

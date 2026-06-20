@@ -49,6 +49,11 @@ Decisions locked:
   resistance. **14/14 pytest tests pass** (determinism, weights-sum, formula
   fixtures, all six verdicts, Insufficient/Mixed as real outcomes, contradiction
   flips Verified→Mixed). Added root `.gitignore`.
+- **2026-06-19** — **Gateway → Trust Engine wiring**: typed `ScorerClient` +
+  `POST /v1/score` proxy route on the Fastify gateway (`TRUST_ENGINE_URL`,
+  default :8000). Gateway validates + forwards, never scores (INV-DETERMINISM);
+  502 on engine error, 400 on bad body. Mocked-fetch integration tests. QA green:
+  gateway 5 tests + portal 3 + Python 46.
 - **2026-06-19** — **Trust Engine HTTP surface** (FastAPI, `eip_trust.api`):
   `GET /health` + `POST /v1/score` ({evidence[], historical}) → `TrustResult`.
   Thin transport over the deterministic scorer (still no scoring in the API layer,
@@ -117,14 +122,16 @@ Decisions locked:
 
 In priority order. Each is one loop unless noted.
 
-1. **Gateway → Trust Engine call** — the Python scorer is live (FastAPI
-   `POST /v1/score`); now have the Fastify gateway proxy to it and the portal read
-   live data instead of `lib/sample.ts`. Add a typed client + an integration test.
+1. **Portal → live data** — have the Next.js portal fetch a verdict from the
+   gateway (`/v1/score`) instead of `lib/sample.ts` (server component fetch);
+   keep a static fallback for tests.
 2. **Claim Engine vertical** — first consumer of `claim.schema.json`: extraction
    + entity/event recognition + claim-type classification (LLM via the recorded
    wrapper; never scores).
 3. **Portal depth** — evidence graph view, contradictions panel, appeal entry;
    accessibility pass.
+4. **End-to-end integration test** — optional real round-trip (spin up FastAPI +
+   gateway) in CI, complementing the mocked unit tests.
 
 ---
 
@@ -140,6 +147,9 @@ In priority order. Each is one loop unless noted.
 
 ## Loop log (append-only, newest first)
 
+- **2026-06-19** — Gateway→engine wiring loop (autonomous session): ScorerClient +
+  `/v1/score` proxy + mocked-fetch integration tests (happy/400/502). Verification:
+  `./scripts/qa.sh` → Python 46 + gateway 5 + portal 3, typecheck + prettier.
 - **2026-06-19** — Trust Engine HTTP surface loop (autonomous session): FastAPI
   `eip_trust.api` (/health, /v1/score) + TestClient tests + `make serve`.
   Verification: `./scripts/qa.sh` → 46 Python tests + web; live POST /v1/score 200.
