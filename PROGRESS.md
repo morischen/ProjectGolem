@@ -49,6 +49,14 @@ Decisions locked:
   resistance. **14/14 pytest tests pass** (determinism, weights-sum, formula
   fixtures, all six verdicts, Insufficient/Mixed as real outcomes, contradiction
   flips Verified→Mixed). Added root `.gitignore`.
+- **2026-06-19** — **Claim Engine vertical** (`ai-services/claim-engine`): first
+  consumer of `claim.schema.json`. LLM extraction + claim-type classification via a
+  **recorded LLM wrapper** ([ADR-0005](docs/adr/0005-llm-recorded-wrapper.md)):
+  `RecordedCall` captures model+prompt+inputs (INV-REPRO); `StubLLMClient` keeps
+  tests offline/green; `AnthropicLLMClient` (Claude Opus 4.8, adaptive thinking)
+  scaffolded for runtime. LLM never scores (INV-DETERMINISM); output validated
+  against the Claim contract. QA green: 11 tests + smoke; wired into the repo gate
+  + CI.
 - **2026-06-19** — **Portal → live data**: `fetchVerdict` (server-side) calls the
   gateway `POST /v1/score` (`GATEWAY_URL`) and renders the result, with a static
   `sample.ts` fallback when the gateway is unreachable (keeps tests/`next build`
@@ -127,9 +135,9 @@ Decisions locked:
 
 In priority order. Each is one loop unless noted.
 
-1. **Claim Engine vertical** — first consumer of `claim.schema.json`: extraction
-   + entity/event recognition + claim-type classification (LLM via the recorded
-   wrapper; never scores).
+1. **Claim Engine HTTP + gateway wiring** — expose claim-engine over FastAPI
+   (`POST /v1/extract` → `Claim`) and add a gateway route; first claim→evidence→
+   verdict path stitched together.
 2. **Portal depth** — evidence graph view, contradictions panel, appeal entry;
    accessibility pass.
 3. **End-to-end integration test** — optional real round-trip (spin up FastAPI +
@@ -149,6 +157,10 @@ In priority order. Each is one loop unless noted.
 
 ## Loop log (append-only, newest first)
 
+- **2026-06-19** — Claim Engine loop (autonomous session): new `claim-engine`
+  service — recorded LLM wrapper (stub + Anthropic scaffold) + extractor + Claim
+  codegen + ADR-0005; added to repo QA gate and CI. Verification: `./scripts/qa.sh`
+  → trust-engine 46 + claim-engine 11 + gateway 5 + portal 6, all green.
 - **2026-06-19** — Portal→live-data loop: `fetchVerdict` (gateway call + static
   fallback) wired into the page; mocked-fetch tests (live / unreachable / non-2xx).
   Verification: `./scripts/qa.sh` → Python 46 + gateway 5 + portal 6, typecheck/fmt.

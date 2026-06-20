@@ -33,6 +33,33 @@ jobs:
           git diff --exit-code src/eip_trust/_generated/ \
             || (echo "Generated models are stale — run 'make gen' and commit." && exit 1)
 
+  claim-engine:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ai-services/claim-engine
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+      - name: Sync deps
+        run: uv sync
+      - name: Lint
+        run: uv run ruff check .
+      - name: Format check
+        run: uv run ruff format --check .
+      - name: Type check
+        run: uv run mypy
+      - name: Tests
+        run: uv run pytest -q
+      - name: Smoke
+        run: uv run python scripts/smoke.py
+      - name: Contract codegen drift
+        run: |
+          make gen
+          git diff --exit-code src/eip_claim/_generated/ \
+            || (echo "Generated models are stale — run 'make gen' and commit." && exit 1)
+
   web:
     runs-on: ubuntu-latest
     steps:

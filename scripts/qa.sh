@@ -11,6 +11,7 @@ root="$(cd "$(dirname "$0")/.." && pwd)"
 # Python services expose a `make qa` target (lint + typecheck + test + smoke).
 PY_SERVICES=(
   "ai-services/trust-engine"
+  "ai-services/claim-engine"
 )
 
 for svc in "${PY_SERVICES[@]}"; do
