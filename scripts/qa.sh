@@ -13,6 +13,7 @@ PY_SERVICES=(
   "ai-services/trust-engine"
   "ai-services/claim-engine"
   "ai-services/evidence-engine"
+  "ai-services/e2e"
 )
 
 for svc in "${PY_SERVICES[@]}"; do

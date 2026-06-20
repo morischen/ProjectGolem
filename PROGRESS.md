@@ -49,6 +49,12 @@ Decisions locked:
   resistance. **14/14 pytest tests pass** (determinism, weights-sum, formula
   fixtures, all six verdicts, Insufficient/Mixed as real outcomes, contradiction
   flips Verified→Mixed). Added root `.gitignore`.
+- **2026-06-19** — **End-to-end integration test** (`ai-services/e2e`): a
+  non-package uv project path-depending on all three engines; drives
+  **claim → evidence → trust** in one process with stubs, exchanging `Evidence` as
+  JSON (the real HTTP boundary). Proves the independently-generated contracts line
+  up (Verified + Mixed paths; cross-engine `EvidenceRelation` parity). Added to the
+  repo QA gate + CI. 3 tests green.
 - **2026-06-19** — **Portal depth**: added a `ContradictionsPanel` (opposing
   evidence surfaced first-class, with count + empty state) and an `AppealEntry`
   affordance (states appeals are logged publicly), both with accessible
@@ -141,8 +147,8 @@ Decisions locked:
 
 ## 🔄 In progress
 
-- **Autonomous loop session** (owner directive): after each loop run tests + QA
-  (ruff/mypy) + smoke, then commit & push, then continue. Working the Next list.
+- _Nothing in flight._ The autonomous loop session drained the entire queued Next
+  list (Loops A–O). Future work lives in Backlog until scheduled.
 
 ---
 
@@ -162,26 +168,37 @@ Decisions locked:
 
 ## ⏭️ Next (proposed — confirm before starting)
 
-In priority order. Each is one loop unless noted.
-
-1. **End-to-end integration test** — cross-engine round-trip in one process
-   (claim → evidence → trust via JSON), proving the independently-generated
-   contracts line up.
+✅ **The queued roadmap is fully implemented (Loops A–O).** Nothing is scheduled.
+Pick the next initiative from Backlog when ready.
 
 ---
 
 ## Backlog (not yet scheduled)
 
-- ADRs for open decisions in ARCHITECTURE.md §8 (codegen, canonical record
-  ownership, embeddings/chunking, multilingual pipeline, auth provider).
-- New blueprint sections flagged earlier but not written: **Legal & Liability**,
-  **Platform Threat Model**, and a **Budget revision** (§25) to cover labeler
-  compensation, certifications, data licensing, translation, and audits.
+Larger initiatives, not single mechanical loops — each needs its own scoping:
+
+- **Real retrieval backends** — implement `Retriever` against the data stores
+  (Neo4j graph traversal + Qdrant semantic search) behind the stub seam; add the
+  independence/citation-laundering graph analysis (§4 of the review).
+- **Persistence & bitemporal verdicts** — Postgres-backed canonical claim/verdict
+  records with versioned snapshots (INV-TEMPORAL); audit log.
+- **Real LLM enablement** — exercise `AnthropicLLMClient` end-to-end with an API
+  key behind a feature flag; calibration tests against the gold benchmark (§28).
+- **AuthN/Z + rate limiting** — OIDC, RBAC, MFA at the gateway (blueprint §22).
+- **ADRs for open decisions** in ARCHITECTURE.md §8 (canonical record ownership,
+  embeddings/chunking, multilingual pipeline, auth provider).
+- **New blueprint sections** flagged in review: **Legal & Liability**, **Platform
+  Threat Model**, **Budget revision** (§25).
 
 ---
 
 ## Loop log (append-only, newest first)
 
+- **2026-06-19** — End-to-end integration test loop (autonomous session): new
+  `ai-services/e2e` cross-engine pipeline test (claim→evidence→trust via JSON);
+  added to gate + CI. **This drained the queued Next list (Loops A–O).**
+  Verification: `./scripts/qa.sh` → trust 46 + claim 15 + evidence 12 + e2e 3 +
+  gateway 11 + portal 10, all green.
 - **2026-06-19** — Portal depth loop (autonomous session): ContradictionsPanel +
   AppealEntry components with accessibility roles + vitest tests; wired into page.
   Verification: `./scripts/qa.sh` → portal 10, all services green.

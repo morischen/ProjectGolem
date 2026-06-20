@@ -1,0 +1,32 @@
+[project]
+name = "eip-e2e"
+version = "0.0.1"
+description = "Cross-engine end-to-end integration tests (claim -> evidence -> trust)."
+requires-python = ">=3.12"
+dependencies = [
+    "eip-claim-engine",
+    "eip-evidence-engine",
+    "eip-trust-engine",
+]
+
+[tool.uv]
+package = false
+
+[tool.uv.sources]
+eip-llm = { path = "../libs/eip-llm", editable = true }
+eip-claim-engine = { path = "../claim-engine", editable = true }
+eip-evidence-engine = { path = "../evidence-engine", editable = true }
+eip-trust-engine = { path = "../trust-engine", editable = true }
+
+[dependency-groups]
+dev = ["pytest>=8.0", "ruff>=0.6"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
