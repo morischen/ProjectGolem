@@ -49,6 +49,12 @@ Decisions locked:
   resistance. **14/14 pytest tests pass** (determinism, weights-sum, formula
   fixtures, all six verdicts, Insufficient/Mixed as real outcomes, contradiction
   flips Verified→Mixed). Added root `.gitignore`.
+- **2026-06-19** — **Evidence Engine HTTP + gateway wiring**: FastAPI
+  `eip_evidence.api` (`/health`, `POST /v1/gather` {claim_text, candidates} →
+  `Evidence[]`) with injectable LLM (`make serve`, port 8002). Gateway gains a typed
+  `EvidenceClient` + `POST /v1/gather` proxy (`EVIDENCE_ENGINE_URL`, default :8002).
+  Gateway now fronts all three engines (`/v1/extract`, `/v1/gather`, `/v1/score`).
+  QA green: evidence 12 + gateway 11.
 - **2026-06-19** — **Shared `eip-llm` lib**: extracted the recorded LLM wrapper
   (`RecordedCall`/`LLMClient`/`StubLLMClient`/`AnthropicLLMClient`) into
   [ai-services/libs/eip-llm](ai-services/libs/eip-llm/) (PEP 561 `py.typed`).
@@ -154,12 +160,11 @@ Decisions locked:
 
 In priority order. Each is one loop unless noted.
 
-1. **Evidence Engine HTTP + gateway wiring** — FastAPI `POST /v1/gather` (claim →
-   `Evidence[]`) + gateway proxy, completing the wired extract→gather→score path.
-2. **Portal depth** — evidence graph view, contradictions panel, appeal entry;
-   accessibility pass.
-3. **End-to-end integration test** — optional real round-trip (spin up the FastAPI
-   services + gateway) in CI, complementing the mocked unit tests.
+1. **Portal depth** — contradictions panel + appeal-entry affordance on the
+   transparency surface; accessibility pass (roles/labels). Tested with vitest.
+2. **End-to-end integration test** — cross-engine round-trip in one process
+   (claim → evidence → trust via JSON), proving the independently-generated
+   contracts line up.
 
 ---
 
@@ -175,6 +180,10 @@ In priority order. Each is one loop unless noted.
 
 ## Loop log (append-only, newest first)
 
+- **2026-06-19** — Evidence Engine HTTP + gateway wiring loop (autonomous session):
+  FastAPI `/v1/gather` (DI'd LLM) + gateway `EvidenceClient`/proxy + mocked tests.
+  Verification: `./scripts/qa.sh` → trust 46 + claim 15 + evidence 12 + gateway 11
+  + portal 6.
 - **2026-06-19** — Shared eip-llm lib loop (autonomous session): extracted the
   recorded LLM wrapper into `libs/eip-llm`; both engines migrated via uv path dep,
   local copies deleted. Verification: `./scripts/qa.sh` → trust 46 + claim 15 +

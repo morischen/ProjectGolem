@@ -1,5 +1,5 @@
 # Evidence Retrieval Engine tasks. Requires uv (ADR-0002).
-.PHONY: gen lint typecheck test smoke qa
+.PHONY: gen lint typecheck test smoke serve qa
 
 # Regenerate the Evidence Pydantic model from ../../contracts (ADR-0004).
 gen:
@@ -24,5 +24,8 @@ test:
 
 smoke:
 	uv run python scripts/smoke.py
+
+serve:
+	uv run uvicorn eip_evidence.api:app --reload --port 8002
 
 qa: lint typecheck test smoke
