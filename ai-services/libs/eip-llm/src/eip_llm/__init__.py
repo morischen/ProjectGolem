@@ -1,9 +1,12 @@
-"""LLM access via a recorded wrapper.
+"""Shared recorded LLM wrapper (ADR-0005).
 
-Every LLM call returns a `RecordedCall` capturing the model id, prompt, and inputs
-alongside the output — so any LLM-assisted result is reproducible (INV-REPRO,
-ADR-0005). The LLM does language work only (extraction, classification); it never
-produces a confidence score or verdict (INV-DETERMINISM, ADR-0003).
+Every LLM call returns a `RecordedCall` capturing model id + prompt + inputs +
+output, so any LLM-assisted result is reproducible (INV-REPRO). The wrapper does
+language work only — it never produces a score or verdict (INV-DETERMINISM).
+
+`StubLLMClient` is the deterministic, network-free client for tests/offline use
+(returns preset outputs in sequence; the last repeats once exhausted).
+`AnthropicLLMClient` is the real implementation (Claude Opus 4.8, adaptive thinking).
 """
 
 from __future__ import annotations
@@ -14,8 +17,6 @@ from typing import Protocol, runtime_checkable
 
 @dataclass(frozen=True)
 class RecordedCall:
-    """An LLM call and everything needed to reproduce it."""
-
     model_id: str
     system: str
     prompt: str
@@ -25,27 +26,30 @@ class RecordedCall:
 
 @runtime_checkable
 class LLMClient(Protocol):
-    """Minimal text-completion surface. Implementations must record the call."""
-
     def complete(self, *, system: str, prompt: str, inputs: dict[str, str]) -> RecordedCall: ...
 
 
 class StubLLMClient:
-    """Deterministic client for tests/offline use: returns a preset output and
-    records every call. No network."""
+    """Deterministic client for tests: returns preset outputs in sequence (the last
+    output repeats once exhausted) and records every call. No network."""
 
-    def __init__(self, output: str, model_id: str = "stub") -> None:
-        self._output = output
+    def __init__(self, outputs: list[str] | str, model_id: str = "stub") -> None:
+        self._outputs = [outputs] if isinstance(outputs, str) else list(outputs)
+        if not self._outputs:
+            raise ValueError("StubLLMClient requires at least one output")
+        self._index = 0
         self._model_id = model_id
         self.calls: list[RecordedCall] = []
 
     def complete(self, *, system: str, prompt: str, inputs: dict[str, str]) -> RecordedCall:
+        output = self._outputs[min(self._index, len(self._outputs) - 1)]
+        self._index += 1
         call = RecordedCall(
             model_id=self._model_id,
             system=system,
             prompt=prompt,
             inputs=dict(inputs),
-            output=self._output,
+            output=output,
         )
         self.calls.append(call)
         return call
@@ -53,10 +57,7 @@ class StubLLMClient:
 
 class AnthropicLLMClient:
     """Real client backed by the Anthropic SDK (scaffold — not exercised in CI).
-
-    Defaults to Claude Opus 4.8 with adaptive thinking. Records the call for
-    reproducibility. Requires `ANTHROPIC_API_KEY` and network access at runtime.
-    """
+    Claude Opus 4.8, adaptive thinking. Requires `ANTHROPIC_API_KEY` at runtime."""
 
     def __init__(self, model_id: str = "claude-opus-4-8", max_tokens: int = 2000) -> None:
         self._model_id = model_id
@@ -85,3 +86,6 @@ class AnthropicLLMClient:
             inputs=dict(inputs),
             output=text,
         )
+
+
+__all__ = ["RecordedCall", "LLMClient", "StubLLMClient", "AnthropicLLMClient"]

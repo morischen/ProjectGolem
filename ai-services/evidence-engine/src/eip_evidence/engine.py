@@ -11,8 +11,9 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass
 
+from eip_llm import LLMClient, RecordedCall
+
 from eip_evidence._generated.evidence import Evidence, EvidenceRelation
-from eip_evidence.llm import LLMClient, RecordedCall
 from eip_evidence.models import Candidate
 from eip_evidence.retriever import Retriever
 

@@ -11,8 +11,9 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass
 
+from eip_llm import LLMClient, RecordedCall
+
 from eip_claim._generated.claim import Claim
-from eip_claim.llm import LLMClient, RecordedCall
 
 SYSTEM_PROMPT = (
     "You extract a single normalized claim from source text for an evidence platform. "

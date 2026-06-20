@@ -49,6 +49,12 @@ Decisions locked:
   resistance. **14/14 pytest tests pass** (determinism, weights-sum, formula
   fixtures, all six verdicts, Insufficient/Mixed as real outcomes, contradiction
   flips Verified→Mixed). Added root `.gitignore`.
+- **2026-06-19** — **Shared `eip-llm` lib**: extracted the recorded LLM wrapper
+  (`RecordedCall`/`LLMClient`/`StubLLMClient`/`AnthropicLLMClient`) into
+  [ai-services/libs/eip-llm](ai-services/libs/eip-llm/) (PEP 561 `py.typed`).
+  claim-engine and evidence-engine now depend on it via a uv path dependency and
+  deleted their local copies. Pays down the flagged duplication. QA green across
+  all services; `StubLLMClient` unified (sequential outputs).
 - **2026-06-19** — **Evidence Retrieval Engine vertical** (`ai-services/evidence-engine`):
   the pipeline's middle — `gather()` retrieves candidates (`Retriever` seam,
   `StubRetriever` for tests) and the LLM classifies each one's relation
@@ -148,14 +154,11 @@ Decisions locked:
 
 In priority order. Each is one loop unless noted.
 
-1. **Shared `eip_llm` lib** — extract the recorded LLM wrapper (duplicated in
-   claim-engine and evidence-engine) into a shared Python package; both depend on
-   it via a uv path dependency. Pays down the flagged duplication.
-2. **Evidence Engine HTTP + gateway wiring** — FastAPI `POST /v1/gather` (claim →
+1. **Evidence Engine HTTP + gateway wiring** — FastAPI `POST /v1/gather` (claim →
    `Evidence[]`) + gateway proxy, completing the wired extract→gather→score path.
-3. **Portal depth** — evidence graph view, contradictions panel, appeal entry;
+2. **Portal depth** — evidence graph view, contradictions panel, appeal entry;
    accessibility pass.
-4. **End-to-end integration test** — optional real round-trip (spin up the FastAPI
+3. **End-to-end integration test** — optional real round-trip (spin up the FastAPI
    services + gateway) in CI, complementing the mocked unit tests.
 
 ---
@@ -172,6 +175,10 @@ In priority order. Each is one loop unless noted.
 
 ## Loop log (append-only, newest first)
 
+- **2026-06-19** — Shared eip-llm lib loop (autonomous session): extracted the
+  recorded LLM wrapper into `libs/eip-llm`; both engines migrated via uv path dep,
+  local copies deleted. Verification: `./scripts/qa.sh` → trust 46 + claim 15 +
+  evidence 8 + gateway 8 + portal 6, all green.
 - **2026-06-19** — Evidence Retrieval Engine loop (autonomous session): new
   `evidence-engine` — retriever seam + LLM relation classification → contract-valid
   Evidence; added to repo QA gate + CI. Verification: `./scripts/qa.sh` → trust 46

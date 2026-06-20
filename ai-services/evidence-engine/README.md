@@ -22,5 +22,6 @@ make qa       # lint + typecheck + test + smoke
 
 ## Status
 First vertical: stub retriever + LLM classification → contract-valid Evidence. No
-real retrieval backend or HTTP surface yet (later loops). Note: the LLM wrapper is
-duplicated from claim-engine — extract a shared `eip_llm` lib later.
+real retrieval backend or HTTP surface yet (later loops). The recorded LLM wrapper
+comes from the shared `eip-llm` lib ([ai-services/libs/eip-llm](../libs/eip-llm/)),
+also used by claim-engine.

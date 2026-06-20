@@ -5,10 +5,13 @@ description = "Claim Engine for the Evidence Intelligence Platform — normalize
 requires-python = ">=3.12"
 dependencies = [
     "pydantic>=2.6",
-    "anthropic>=0.40",
+    "eip-llm",
     "fastapi>=0.110",
     "uvicorn>=0.30",
 ]
+
+[tool.uv.sources]
+eip-llm = { path = "../libs/eip-llm", editable = true }
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0"]

@@ -210,7 +210,7 @@ name = "eip-evidence-engine"
 version = "0.0.1"
 source = { editable = "." }
 dependencies = [
-    { name = "anthropic" },
+    { name = "eip-llm" },
     { name = "pydantic" },
 ]
 
@@ -230,7 +230,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "anthropic", specifier = ">=0.40" },
+    { name = "eip-llm", editable = "../libs/eip-llm" },
     { name = "pydantic", specifier = ">=2.6" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
 ]
@@ -244,6 +244,17 @@ dev = [
     { name = "pytest", specifier = ">=8.0" },
     { name = "ruff", specifier = ">=0.6" },
 ]
+
+[[package]]
+name = "eip-llm"
+version = "0.0.1"
+source = { editable = "../libs/eip-llm" }
+dependencies = [
+    { name = "anthropic" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "anthropic", specifier = ">=0.40" }]
 
 [[package]]
 name = "genson"

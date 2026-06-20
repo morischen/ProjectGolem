@@ -3,7 +3,10 @@ name = "eip-evidence-engine"
 version = "0.0.1"
 description = "Evidence Retrieval Engine — retrieves and classifies candidate evidence for a claim (LLM classifies relation; never scores)."
 requires-python = ">=3.12"
-dependencies = ["pydantic>=2.6", "anthropic>=0.40"]
+dependencies = ["pydantic>=2.6", "eip-llm"]
+
+[tool.uv.sources]
+eip-llm = { path = "../libs/eip-llm", editable = true }
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0"]

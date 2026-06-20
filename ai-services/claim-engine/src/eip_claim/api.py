@@ -9,12 +9,12 @@ to `AnthropicLLMClient`. The endpoint extracts/classifies only — it never scor
 
 from __future__ import annotations
 
+from eip_llm import AnthropicLLMClient, LLMClient
 from fastapi import FastAPI
 from pydantic import BaseModel
 
 from eip_claim._generated.claim import Claim
 from eip_claim.extractor import extract_claim
-from eip_claim.llm import AnthropicLLMClient, LLMClient
 
 
 class ExtractRequest(BaseModel):
