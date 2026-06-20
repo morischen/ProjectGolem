@@ -5,9 +5,12 @@ verdicts, and it does so deterministically from a versioned formula. LLMs never
 score (see ADR-0003 / INV-DETERMINISM).
 """
 
-from eip_trust.config import DEFAULT_WEIGHTS
+from eip_trust.config import DEFAULT_WEIGHTS, HISTORICAL_WEIGHTS, weights_for
 from eip_trust.engine import score_claim
+from eip_trust.freshness import freshness_from_age_days
 from eip_trust.models import (
+    Claim,
+    ClaimType,
     ConfidenceBreakdown,
     Evidence,
     EvidenceRelation,
@@ -18,7 +21,12 @@ from eip_trust.models import (
 
 __all__ = [
     "DEFAULT_WEIGHTS",
+    "HISTORICAL_WEIGHTS",
+    "weights_for",
     "score_claim",
+    "freshness_from_age_days",
+    "Claim",
+    "ClaimType",
     "ConfidenceBreakdown",
     "Evidence",
     "EvidenceRelation",

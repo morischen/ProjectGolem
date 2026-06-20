@@ -49,6 +49,11 @@ Decisions locked:
   resistance. **14/14 pytest tests pass** (determinism, weights-sum, formula
   fixtures, all six verdicts, Insufficient/Mixed as real outcomes, contradiction
   flips Verified→Mixed). Added root `.gitignore`.
+- **2026-06-19** — **Trust Engine hardening**: added a pure `freshness_from_age_days`
+  helper (exponential decay, no clock — stays deterministic) and claim-type/domain
+  weight **profiles** (`weights_for`, `HISTORICAL_WEIGHTS` discounts freshness for
+  settled history; each profile versioned). New public exports. QA green: 30 tests,
+  ruff/mypy clean, smoke OK.
 - **2026-06-19** — **Dev-tooling lane**: added `ruff` + `mypy --strict` (pydantic
   plugin) as dev deps with config; a reusable QA gate (`scripts/qa.sh` →
   per-service `make qa` = lint + typecheck + test + smoke), a runtime smoke check
@@ -89,13 +94,10 @@ Decisions locked:
 
 In priority order. Each is one loop unless noted.
 
-1. **Trust Engine hardening** — calibration/golden-fixture tests tied to the gold
-   benchmark (§28); consider freshness-from-dates and domain/claim-type-aware
-   weights (blueprint §10/§23).
-2. **Gold-benchmark harness stub** — schema + loader for benchmark items
-   (spec §28) so L0 gates (G0.x) become measurable early; wire ECE against the
-   Trust Engine.
-3. **Repo scaffolding (remaining)** — `web/` (Fastify gateway + Next.js portal)
+1. **Gold-benchmark harness stub** — schema + loader for benchmark items
+   (spec §28) + golden fixtures, so L0 gates (G0.x) become measurable early; wire
+   verdict-accuracy and ECE-style calibration against the Trust Engine.
+2. **Repo scaffolding (remaining)** — `web/` (Fastify gateway + Next.js portal)
    with TS codegen from `contracts/` (ADR-0004), `infra/docker-compose.yml` for the
    four data stores, and the `pnpm` workspace.
 
@@ -113,6 +115,9 @@ In priority order. Each is one loop unless noted.
 
 ## Loop log (append-only, newest first)
 
+- **2026-06-19** — Trust Engine hardening loop (autonomous session):
+  freshness-from-age helper + versioned weight profiles (default/historical).
+  Verification: `./scripts/qa.sh` → 30 tests, ruff/mypy clean, smoke OK.
 - **2026-06-19** — Dev-tooling lane loop (autonomous session): ruff + mypy strict
   + reusable QA gate (`scripts/qa.sh`) + smoke + CI. Verification:
   `./scripts/qa.sh` → ruff/format/mypy clean, 21 tests, smoke verdict=Verified.
