@@ -49,6 +49,15 @@ Decisions locked:
   resistance. **14/14 pytest tests pass** (determinism, weights-sum, formula
   fixtures, all six verdicts, Insufficient/Mixed as real outcomes, contradiction
   flips Verified→Mixed). Added root `.gitignore`.
+- **2026-06-20** — **Governance docs** (blueprint patch → v1.2): wrote the three
+  sections flagged in the original review — **§25 Budget (revised)** with the omitted
+  line items (data licensing, legal/insurance, certifications, reviewer/labeler pay,
+  translation, audits; total \$2.2M–4.3M), **§29 Legal & Liability** (evidence-not-
+  guilt stance, defamation posture, correction/retraction via the bitemporal store,
+  right-of-reply/appeals, source protection, privacy↔immutability resolution,
+  insurance), **§30 Platform Threat Model** (threats turned inward, each mapped to a
+  control with ✅/◐/○ status — the implemented ADRs 0003/0005/0007/0008 are the
+  primary mitigations). Docs-only; code gate unaffected.
 - **2026-06-19** — **Persistence Q3 — persist verdicts + history API**: Trust Engine
   `POST /v1/score` now persists an append-only versioned snapshot when a `claim_id`
   is supplied and a store is configured (eip-persistence path dep; `knowledge_time`
@@ -243,13 +252,15 @@ Larger initiatives, not single mechanical loops — each needs its own scoping:
 - **AuthN/Z + rate limiting** — OIDC, RBAC, MFA at the gateway (blueprint §22).
 - **ADRs for open decisions** in ARCHITECTURE.md §8 (canonical record ownership,
   embeddings/chunking, multilingual pipeline, auth provider).
-- **New blueprint sections** flagged in review: **Legal & Liability**, **Platform
-  Threat Model**, **Budget revision** (§25).
+- ✅ **Blueprint governance sections — DONE** (v1.2): Legal & Liability (§29),
+  Platform Threat Model (§30), Budget revision (§25).
 
 ---
 
 ## Loop log (append-only, newest first)
 
+- **2026-06-20** — Governance-docs loop: blueprint patch → v1.2 (§25 Budget revised,
+  §29 Legal & Liability, §30 Platform Threat Model). Docs-only; no code changes.
 - **2026-06-19** — Persistence Q3 loop: Trust Engine persists verdicts (claim_id +
   store) + history/latest endpoints. Initiative #2 complete. Verification:
   `./scripts/qa.sh` → trust 54, eip-persistence 13, all services green.

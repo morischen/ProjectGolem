@@ -1,16 +1,19 @@
 # Evidence Intelligence Platform (EIP) — Blueprint Patch
 
 ## Patch Version
-1.1 — Consolidated revisions to the EIP Comprehensive Blueprint (base v1.0)
+1.2 — Consolidated revisions to the EIP Comprehensive Blueprint (base v1.0)
 
 ## Scope of this Patch
-This document supersedes the following sections of the base blueprint:
+This document supersedes / adds the following sections of the base blueprint:
 
 - **Section 23 — Roadmap** → replaced by a **Capability-Gated Roadmap**.
+- **Section 25 — Budget Estimates** → revised (adds the line items the original omitted).
 - **Section 26 — Success Metrics** → revised to align with measurable gate metrics.
 - **Section 28 — Gold Benchmark Design Specification** → new section (the measuring instrument the gates depend on).
+- **Section 29 — Legal & Liability** → new section (v1.2).
+- **Section 30 — Platform Threat Model** → new section (v1.2).
 
-Apply by replacing Sections 23 and 26 in the base document with the versions below and appending Section 28. All other sections of base v1.0 remain in force. Cross-references: the roadmap gates (Section 23) are computed from the benchmark (Section 28); the success metrics (Section 26) reuse the benchmark metric definitions (28.10).
+Apply by replacing Sections 23, 25, 26 in the base document with the versions below and appending Sections 28, 29, 30. All other sections of base v1.0 remain in force. Cross-references: the roadmap gates (Section 23) are computed from the benchmark (Section 28); the success metrics (Section 26) reuse the benchmark metric definitions (28.10); the threat model (Section 30) and legal posture (Section 29) reference controls already implemented in code (ADRs 0003/0005/0007/0008).
 
 ---
 
@@ -536,3 +539,164 @@ Beyond the benchmark itself, three things make the benchmark *worth* having:
 1. **Public "calibration ledger."** Continuously publish, for resolved-after-the-fact claims, what the platform said vs. what turned out true. This is the most powerful trust artifact the platform can produce — it converts "trust our method" into a verifiable track record, and it's only possible because the benchmark/temporal model exist.
 2. **External benchmark contribution.** Let vetted academic partners submit candidate claims + resolutions (under the 28.4 standard). This both grows the set and distributes credibility — outsiders helped build the ruler.
 3. **Shared/open standard.** Long-term (L5), publish the benchmark *methodology* as an open standard for evidence-platform evaluation. Becoming the institution that defines how these systems are measured is a stronger moat than any single verdict, and aligns with Section 27's "global standard" vision.
+
+---
+
+# 25. Budget Estimates (Revised)
+
+The base v1.0 estimate (\$1.3M–2.5M/yr) omitted several load-bearing costs the
+review flagged: data/content licensing, legal & insurance, certifications, reviewer/
+labeler compensation, translation, and independent audits. Revised below. Figures
+are Year-1 USD ranges for a Stage L0→L2 build (see Section 23); they are planning
+figures, not commitments.
+
+## 25.1 Line items
+
+| Category | Year-1 range | Notes |
+|----------|--------------|-------|
+| **Engineering** | \$900k–1.6M | 5–8 ICs (AI/ML, backend, data, DevOps) + fractional lead. The dominant cost. |
+| **Research & review** | \$350k–700k | Historians, journalists, OSINT; **includes paid reviewer/labeler time** (gold benchmark §28.6 + escalation queue FR-007) — previously unbudgeted. |
+| **Data & content acquisition** | \$80k–250k | Paywalled archives/journals, news licensing, **satellite imagery** + forensic/geolocation tooling, court-record access. Recurring. |
+| **Translation & multilingual** | \$40k–120k | Arabic/Hebrew/English from day one (Section 23 L0) — human translation/QA, not just MT. |
+| **Infrastructure** | \$75k–150k | Neo4j/Qdrant/Postgres/object storage, compute, LLM API spend. |
+| **Security & compliance** | \$120k–300k | SOC2 Type II + ISO27001 (6–18 mo, audit fees + tooling + staff time), pen-tests. |
+| **Legal & insurance** | \$120k–350k | Defamation/media-liability counsel + **libel insurance** (Section 29), privacy counsel, jurisdiction review, takedown handling. |
+| **Independent audits** | \$40k–100k | Third-party **bias audits** (≥2/yr, Section 23 gates G2.2/G3.2) + benchmark governance (28.11). |
+| **Operations & governance** | \$100k–200k | Board/advisory ops, nonprofit admin, accounting, comms. |
+| **Contingency (~15%)** | \$280k–550k | Hard-to-reverse domain; budget for surprises. |
+| **Estimated Year-1 total** | **\$2.2M–4.3M** | Up from the v1.0 \$1.3M–2.5M once omitted costs are included. |
+
+## 25.2 Funding-independence note
+Per Section 19/20, **funding transparency is a budget concern, not only a governance
+one**: donation caps, a published donor list, and a funder↔verdict firewall are
+prerequisites for credibility on this topic and should be costed into Operations &
+Governance (legal structuring, disclosure tooling).
+
+---
+
+# 29. Legal & Liability
+
+Publishing "Likely False" / "False" about identifiable people and organizations on
+the world's most contested topic is the platform's highest *operational* risk. This
+section is a posture, not legal advice; engage qualified counsel per jurisdiction
+before any public verdict (a Stage L1→L2 precondition, Section 23.4).
+
+## 29.1 Core stance: evidence, not legal guilt
+The platform assesses **evidentiary support for empirical claims**; it does **not**
+adjudicate legal guilt or render legal conclusions. Legal/definitional/normative
+claims are typed as such (claim-type taxonomy, Section 23 L0) and are handled by
+**mapping what authoritative bodies have concluded**, never by the platform declaring
+a verdict of its own. Every published verdict carries this framing explicitly.
+
+## 29.2 Defamation / libel exposure
+- **Truth + opinion + privilege** are the standard defenses; the platform's design
+  supports them: every verdict is fully **traceable to evidence** (INV-TRACE),
+  **reproducible** (INV-REPRO), and **explainable** — i.e. a documented, good-faith,
+  methodologically-grounded assessment rather than an assertion of fact about a person.
+- **Confidence framing matters legally**: bands + "the evidence currently supports…"
+  language (never bare "X is false") keep statements in protected opinion/assessment
+  territory. "Insufficient/Mixed" are first-class outcomes (INV-FORCE).
+- **Jurisdiction strategy**: libel law varies enormously (US Sullivan-style actual-
+  malice vs. claimant-friendly regimes elsewhere). Decide hosting/incorporation and
+  a geo-exposure posture *before* L2; consider geo-fencing high-risk verdicts pending
+  review.
+
+## 29.3 Correction & retraction policy
+- Errors are corrected **fast and visibly**, within the **≤72h SLA (INV-6)**.
+- Corrections are **append-only verdict versions**, not silent edits — the
+  bitemporal store (ADR-0008) preserves "what we said and when, and why it changed,"
+  which is both a trust artifact and a legal-defensibility artifact.
+- A public **correction log** + the **calibration ledger** (28.12) demonstrate
+  good-faith, systematic error handling.
+
+## 29.4 Takedowns, appeals, and right-of-reply
+- Named subjects get a **right of reply** and a first-class **appeals path**
+  (FR-021): new evidence, source challenge, methodology concern — all logged publicly.
+- A documented **takedown/dispute intake** routes legal complaints to counsel +
+  the review committee; frivolous vs. meritorious are triaged, not auto-actioned.
+
+## 29.5 Source & subject protection (do-no-harm)
+- Verdicts on active-conflict claims can endanger **witnesses, sources, and
+  bystanders**. A do-no-harm review gates publication of anything that could expose
+  at-risk individuals; eyewitness/whistleblower identities are protected and
+  segregated from public evidence.
+
+## 29.6 Privacy & the immutability↔erasure tension
+- **GDPR/CCPA** rights (incl. erasure) conflict naïvely with immutable audit logs.
+  Resolution (ARCHITECTURE.md §2): **immutably log decisions + public evidence**,
+  keep **personal data segregated and erasable** (crypto-shredding), so the audit
+  trail of *the assessment* survives while *personal data* can be removed.
+
+## 29.7 Insurance
+- Carry **media/defamation liability insurance** sized to the launch domain (a
+  budgeted Year-1 line item, §25). Bind coverage **before** the first public verdict.
+
+---
+
+# 30. Platform Threat Model
+
+The Influence Operations module (base §18) points outward; this section points the
+same adversarial lens **inward** — the platform itself is a high-value target. Each
+threat lists its status: ✅ a control exists in code, ◐ partially addressed, ○ planned.
+
+## 30.1 Evidence poisoning & manufactured corroboration
+- **Threat:** flooding sources, fabricated "primary documents," sockpuppet outlets
+  citing each other to fake independent corroboration; citation laundering (a Tier-4
+  rumor laundered up to a Tier-2 citation).
+- **Controls:** ✅ **independence analysis** groups sources into provenance clusters
+  so shared-origin / citation-cycle corroboration is detected and down-weights the
+  score (`independence_ratio`, ADR-0007, wired into the Trust Engine). ◐ source-tier
+  weighting and corroboration over *distinct provenance*, not raw count. ○ graph-based
+  source-ownership detection; ○ rate-limited, reputation-gated submissions.
+
+## 30.2 Prompt injection via ingested content
+- **Threat:** URLs/PDFs/social posts carrying embedded instructions that try to
+  steer extraction/classification LLMs.
+- **Controls:** ✅ untrusted source text is passed as **user content, never as
+  instructions**, through the recorded LLM wrapper (ADR-0005); ✅ the adversarial
+  **prompt-injection benchmark subset** (28.7.2) gates progression; ◐ output schema
+  validation rejects malformed/manipulated extractions.
+
+## 30.3 Scoring manipulation
+- **Threat:** getting an LLM to inflate/deflate a score or verdict.
+- **Controls:** ✅ **LLMs never score** — confidence/verdicts come only from the
+  deterministic Trust Engine (INV-DETERMINISM, ADR-0003), so there is no LLM path to
+  a score to attack; ✅ scoring is reproducible from versioned config.
+
+## 30.4 Resource exhaustion / DoS on scarce humans
+- **Threat:** submission flooding and **appeal abuse** to exhaust the human review
+  queue (the platform's scarcest resource).
+- **Controls:** ◐ gateway is the single choke point for rate-limiting/abuse gating
+  (Section 23 G2.x); ○ per-actor reputation + submission quotas; ○ escalation-volume
+  vs. reviewer-throughput monitoring (gate G2.6).
+
+## 30.5 Source-reliability & methodology gaming
+- **Threat:** gaming source-reliability scores over time; lobbying to change weights.
+- **Controls:** ✅ weights/source-reliability are **versioned config** with every
+  verdict recording its config version; ○ change-control + public comment on weight
+  changes (Section 20); ○ anomaly detection on reliability drift.
+
+## 30.6 Benchmark capture
+- **Threat:** capturing the gold benchmark to make a biased platform *look* unbiased.
+- **Controls:** ◐ benchmark governance (28.11) — perspective-diverse committee,
+  sealed third-party partition, open methodology/closed items; ○ contamination
+  canaries (28.8); ○ adversarial review.
+
+## 30.7 Model & supply-chain integrity
+- **Threat:** a silent model upgrade changing historical verdicts; dependency
+  compromise.
+- **Controls:** ✅ **pinned, recorded model IDs** per call (INV-REPRO) so verdicts
+  are reproducible and upgrades are explicit; ◐ committed lockfiles + codegen-drift
+  CI; ○ SBOM + signed dependencies; ○ curated internal package index.
+
+## 30.8 Firewall integrity (coordination ↔ truth)
+- **Threat:** influence/coordination signals leaking into truth scoring (or vice
+  versa), letting "this looks coordinated" silently lower a true claim's score.
+- **Controls:** ✅ **one-way isolation** required in code (INV-INDEPENDENCE);
+  ○ an audit asserting zero scoring leakage from the Influence-Ops module (gate G4.2).
+
+## 30.9 Summary
+The architecture's defining choices — deterministic scoring, the recorded LLM
+boundary, graph-based independence, bitemporal reproducibility — are not only quality
+features; they are **the threat model's primary mitigations**. The open (○) items
+above are the prioritized security backlog.
