@@ -1,6 +1,7 @@
 import Fastify, { type FastifyInstance } from "fastify";
 import type { Evidence, Verdict } from "@eip/contracts";
 import { ScorerClient } from "./scorerClient";
+import { ClaimClient } from "./claimClient";
 
 // The six allowed verdicts, typed against the generated contract (drift fails the
 // typecheck). The gateway is presentation/orchestration only — it never scores
@@ -16,6 +17,7 @@ const ALLOWED_VERDICTS: Verdict[] = [
 
 export interface AppOptions {
   scorer?: ScorerClient;
+  claim?: ClaimClient;
 }
 
 interface ScoreBody {
@@ -23,10 +25,18 @@ interface ScoreBody {
   historical?: boolean;
 }
 
+interface ExtractBody {
+  text?: string;
+  claim_id?: string;
+}
+
 export function buildApp(opts: AppOptions = {}): FastifyInstance {
   const scorer =
     opts.scorer ??
     new ScorerClient(process.env.TRUST_ENGINE_URL ?? "http://localhost:8000");
+  const claim =
+    opts.claim ??
+    new ClaimClient(process.env.CLAIM_ENGINE_URL ?? "http://localhost:8001");
 
   const app = Fastify({ logger: false });
 
@@ -54,6 +64,22 @@ export function buildApp(opts: AppOptions = {}): FastifyInstance {
     } catch {
       reply.code(502);
       return { error: "trust-engine unavailable" };
+    }
+  });
+
+  // Proxy claim extraction to the Claim Engine. Validates and forwards; the LLM
+  // runs in the Python service, never here.
+  app.post("/v1/extract", async (request, reply) => {
+    const body = (request.body ?? {}) as ExtractBody;
+    if (typeof body.text !== "string" || typeof body.claim_id !== "string") {
+      reply.code(400);
+      return { error: "body.text and body.claim_id (strings) are required" };
+    }
+    try {
+      return await claim.extract({ text: body.text, claimId: body.claim_id });
+    } catch {
+      reply.code(502);
+      return { error: "claim-engine unavailable" };
     }
   });
 

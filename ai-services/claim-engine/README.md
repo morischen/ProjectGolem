@@ -20,6 +20,12 @@ make gen      # regenerate the Claim model from ../../contracts
 make qa       # lint + typecheck + test + smoke
 ```
 
+## HTTP surface
+`eip_claim.api` (FastAPI): `GET /health` + `POST /v1/extract` ({text, claim_id}) →
+`Claim`. The LLM client is injectable (`create_app(llm=...)`) so tests pass a
+`StubLLMClient`; runtime defaults to `AnthropicLLMClient`. Run with `make serve`
+(port 8001). The gateway proxies to it at `/v1/extract` (`CLAIM_ENGINE_URL`).
+
 ## Status
-First vertical: extraction + claim-type classification, validated against the Claim
-contract. Not yet wired to an HTTP surface or the gateway (later loops).
+Extraction + claim-type classification, validated against the Claim contract, with
+an HTTP surface wired to the gateway. LLM still stubbed in CI.

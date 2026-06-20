@@ -49,6 +49,11 @@ Decisions locked:
   resistance. **14/14 pytest tests pass** (determinism, weights-sum, formula
   fixtures, all six verdicts, Insufficient/Mixed as real outcomes, contradiction
   flips Verified→Mixed). Added root `.gitignore`.
+- **2026-06-19** — **Claim Engine HTTP + gateway wiring**: FastAPI `eip_claim.api`
+  (`/health`, `POST /v1/extract` → `Claim`) with an injectable LLM client (stub in
+  tests, Anthropic at runtime; `make serve`, port 8001). Gateway gains a typed
+  `ClaimClient` + `POST /v1/extract` proxy (`CLAIM_ENGINE_URL`, default :8001),
+  mocked-fetch tests. QA green: claim-engine 15 + gateway 8.
 - **2026-06-19** — **Claim Engine vertical** (`ai-services/claim-engine`): first
   consumer of `claim.schema.json`. LLM extraction + claim-type classification via a
   **recorded LLM wrapper** ([ADR-0005](docs/adr/0005-llm-recorded-wrapper.md)):
@@ -135,13 +140,13 @@ Decisions locked:
 
 In priority order. Each is one loop unless noted.
 
-1. **Claim Engine HTTP + gateway wiring** — expose claim-engine over FastAPI
-   (`POST /v1/extract` → `Claim`) and add a gateway route; first claim→evidence→
-   verdict path stitched together.
+1. **Evidence Retrieval Engine vertical** — the missing middle of claim→verdict:
+   take a `Claim`, retrieve + classify candidate `Evidence` (Supports/Contradicts/
+   Neutral/Inconclusive), with a stubbed retriever for hermetic tests.
 2. **Portal depth** — evidence graph view, contradictions panel, appeal entry;
    accessibility pass.
-3. **End-to-end integration test** — optional real round-trip (spin up FastAPI +
-   gateway) in CI, complementing the mocked unit tests.
+3. **End-to-end integration test** — optional real round-trip (spin up the FastAPI
+   services + gateway) in CI, complementing the mocked unit tests.
 
 ---
 
@@ -157,6 +162,9 @@ In priority order. Each is one loop unless noted.
 
 ## Loop log (append-only, newest first)
 
+- **2026-06-19** — Claim Engine HTTP + gateway wiring loop (autonomous session):
+  FastAPI `/v1/extract` (DI'd LLM) + gateway `ClaimClient`/proxy + mocked tests.
+  Verification: `./scripts/qa.sh` → trust 46 + claim 15 + gateway 8 + portal 6.
 - **2026-06-19** — Claim Engine loop (autonomous session): new `claim-engine`
   service — recorded LLM wrapper (stub + Anthropic scaffold) + extractor + Claim
   codegen + ADR-0005; added to repo QA gate and CI. Verification: `./scripts/qa.sh`

@@ -1,5 +1,5 @@
 # Claim Engine tasks. Requires uv (ADR-0002).
-.PHONY: gen lint typecheck test smoke qa
+.PHONY: gen lint typecheck test smoke serve qa
 
 # Regenerate the Claim Pydantic model from ../../contracts (ADR-0004).
 gen:
@@ -24,5 +24,8 @@ test:
 
 smoke:
 	uv run python scripts/smoke.py
+
+serve:
+	uv run uvicorn eip_claim.api:app --reload --port 8001
 
 qa: lint typecheck test smoke
