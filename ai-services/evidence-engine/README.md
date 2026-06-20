@@ -13,6 +13,24 @@ emitting `Evidence` (contracts/evidence.schema.json) ready for the Trust Engine.
 Pipeline position: **Claim Engine → Evidence Engine → Trust Engine** (extract →
 retrieve+classify → score).
 
+## Retrieval backends (ADR-0006 / ADR-0007)
+Retrievers sit behind the `Retriever` protocol and are composable:
+- `SemanticRetriever` — `Embedder` + `VectorStore` (Qdrant adapter).
+- `GraphRetriever` — `GraphStore` (Neo4j adapter); knowledge-graph traversal.
+- `CompositeRetriever` — merges + de-dupes across backends.
+- `assess_independence` — groups sources into provenance clusters to detect
+  shared-origin / citation-cycle laundering (review §4).
+
+CI is hermetic (fakes; no live DB). To run against real stores via
+[infra/docker-compose.yml](../../infra/docker-compose.yml):
+```bash
+docker compose -f infra/docker-compose.yml up -d qdrant neo4j
+# (seed a Qdrant "evidence" collection + the claim/evidence graph — not yet scripted)
+QDRANT_URL=http://localhost:6333 \
+NEO4J_URI=bolt://localhost:7687 NEO4J_USER=neo4j NEO4J_PASSWORD=devpassword \
+  make serve   # /v1/gather will now retrieve server-side when candidates are omitted
+```
+
 ## Develop & test
 ```bash
 uv sync

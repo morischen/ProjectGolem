@@ -49,6 +49,13 @@ Decisions locked:
   resistance. **14/14 pytest tests pass** (determinism, weights-sum, formula
   fixtures, all six verdicts, Insufficient/Mixed as real outcomes, contradiction
   flips Verified→Mixed). Added root `.gitignore`.
+- **2026-06-19** — **Real retrieval P3 — composite + env-wired API**:
+  `CompositeRetriever` (merge + dedup by id, keep highest quality) +
+  `build_retriever_from_env` (assembles Qdrant/Neo4j backends from `QDRANT_URL`/
+  `NEO4J_URI`). Evidence Engine `/v1/gather` now retrieves server-side when no
+  candidates are supplied (injected/env retriever), else uses request candidates.
+  docker-compose validation docs added. evidence-engine: 29 tests. **Initiative #1
+  (real retrieval) complete.**
 - **2026-06-19** — **Real retrieval P2 — graph retriever + independence analysis**:
   `GraphStore` seam + `Neo4jGraphStore` adapter (`make_neo4j_store`; `neo4j` dep) +
   `GraphRetriever` (drop-in `Retriever`). Plus the differentiator
@@ -198,10 +205,11 @@ Pick the next initiative from Backlog when ready.
 
 Larger initiatives, not single mechanical loops — each needs its own scoping:
 
-- **Real retrieval backends** (in progress) — ✅ P1 semantic/vector retriever
-  (Qdrant), ✅ P2 graph retriever (Neo4j) + independence/citation-laundering
-  analysis. Remaining: **P3** composite multi-source retriever (merge + dedup) wired
-  into the evidence-engine API behind an env flag + docker-compose validation docs.
+- ✅ **Real retrieval backends — DONE** (P1 Qdrant semantic, P2 Neo4j graph +
+  independence/citation-laundering, P3 composite + env-wired API + docker-compose
+  docs). All hermetic in CI; live DBs validated via docker-compose. Remaining
+  follow-ups: a real embedding model, graph-schema seeding scripts, and feeding
+  `independence_ratio` into the Trust Engine's Independence component.
 - **Persistence & bitemporal verdicts** — Postgres-backed canonical claim/verdict
   records with versioned snapshots (INV-TEMPORAL); audit log.
 - **Real LLM enablement** — exercise `AnthropicLLMClient` end-to-end with an API
@@ -216,6 +224,9 @@ Larger initiatives, not single mechanical loops — each needs its own scoping:
 
 ## Loop log (append-only, newest first)
 
+- **2026-06-19** — Real retrieval P3 loop: CompositeRetriever + env-wired
+  `/v1/gather` + docker-compose docs. Initiative #1 complete. Verification:
+  `./scripts/qa.sh` → evidence-engine 29, all services green.
 - **2026-06-19** — Real retrieval P2 loop: Neo4j graph retriever + independence
   analysis (ADR-0007). Verification: `./scripts/qa.sh` → evidence-engine 25, all green.
 - **2026-06-19** — Real retrieval P1 loop: retrieval seams + SemanticRetriever +

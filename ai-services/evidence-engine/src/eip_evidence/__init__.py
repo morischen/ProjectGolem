@@ -7,6 +7,7 @@ ADR-0005); it never scores. Output `Evidence` feeds the deterministic Trust Engi
 from eip_llm import AnthropicLLMClient, LLMClient, RecordedCall, StubLLMClient
 
 from eip_evidence._generated.evidence import Evidence, EvidenceRelation
+from eip_evidence.composite import CompositeRetriever, build_retriever_from_env
 from eip_evidence.embedding import Embedder, StubEmbedder
 from eip_evidence.engine import GatherResult, build_prompt, classify_candidate, gather
 from eip_evidence.graph_retriever import GraphRetriever
@@ -46,6 +47,8 @@ __all__ = [
     "make_neo4j_store",
     "IndependenceReport",
     "assess_independence",
+    "CompositeRetriever",
+    "build_retriever_from_env",
     "AnthropicLLMClient",
     "LLMClient",
     "RecordedCall",

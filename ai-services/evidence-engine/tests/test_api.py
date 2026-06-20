@@ -44,7 +44,23 @@ def test_gather_empty_candidates_returns_empty():
     assert res.json() == []
 
 
-def test_gather_requires_claim_text_and_candidates():
+def test_gather_requires_claim_text():
     client = _client(json.dumps({"relation": "supports"}))
     res = client.post("/v1/gather", json={"candidates": [CANDIDATE]})
     assert res.status_code == 422
+
+
+def test_gather_uses_configured_retriever_when_no_candidates():
+    from eip_evidence import Candidate, StubRetriever
+    from eip_evidence.api import create_app
+
+    retriever = StubRetriever(
+        [Candidate(id="r1", source_id="s9", source_tier=1, content="from retriever")]
+    )
+    client = TestClient(create_app(StubLLMClient(json.dumps({"relation": "supports"})), retriever))
+    res = client.post("/v1/gather", json={"claim_text": "a claim"})  # no candidates
+    assert res.status_code == 200
+    body = res.json()
+    assert len(body) == 1
+    assert body[0]["id"] == "r1"
+    assert body[0]["relation"] == "supports"
