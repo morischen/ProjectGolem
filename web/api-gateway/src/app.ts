@@ -59,6 +59,14 @@ interface GatherBody {
   candidates?: unknown[];
 }
 
+interface AssessBody {
+  text?: string;
+  claim_id?: string;
+  candidates?: unknown[];
+  historical?: boolean;
+  event_time?: string | null;
+}
+
 export function buildApp(opts: AppOptions = {}): FastifyInstance {
   const scorer =
     opts.scorer ??
@@ -175,6 +183,42 @@ export function buildApp(opts: AppOptions = {}): FastifyInstance {
       } catch {
         reply.code(502);
         return { error: "evidence-engine unavailable" };
+      }
+    },
+  );
+
+  // End-to-end assessment: extract -> gather -> score (+ persist), in one call. The
+  // gateway only orchestrates the three engines (INV-DETERMINISM: it never scores);
+  // the verdict is produced by the Trust Engine and persisted there (INV-TEMPORAL).
+  app.post(
+    "/v1/assess",
+    { preHandler: protect("write") },
+    async (request, reply) => {
+      const body = (request.body ?? {}) as AssessBody;
+      if (typeof body.text !== "string" || typeof body.claim_id !== "string") {
+        reply.code(400);
+        return { error: "body.text and body.claim_id (strings) are required" };
+      }
+      const candidates = Array.isArray(body.candidates) ? body.candidates : [];
+      try {
+        const claimObj = await claim.extract({
+          text: body.text,
+          claimId: body.claim_id,
+        });
+        const ev = await evidence.gather({
+          claimText: claimObj.text,
+          candidates,
+        });
+        const result = await scorer.score({
+          evidence: ev,
+          historical: body.historical,
+          claimId: body.claim_id,
+          eventTime: body.event_time,
+        });
+        return { claim: claimObj, evidence: ev, result };
+      } catch {
+        reply.code(502);
+        return { error: "assessment pipeline unavailable" };
       }
     },
   );

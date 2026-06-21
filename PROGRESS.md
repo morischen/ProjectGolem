@@ -302,10 +302,17 @@ Larger initiatives, not single mechanical loops — each needs its own scoping:
 - ✅ **AuthN/Z + rate limiting — DONE (first cut)**: API-key auth (scopes/RBAC) +
   in-memory rate limiting at the gateway. Follow-up: OIDC/MFA + a shared/distributed
   rate-limit store (blueprint §22).
-- **Admin portal** (not started) — full operator surface to review/adjust all
-  aspects. Plan: [docs/admin-portal-plan.md](docs/admin-portal-plan.md) (A1 read-only
-  browser → A2 config+audit → A3 review queue/appeals → A4 dashboards+keys). Large,
-  multi-loop; needs new backend admin APIs + a new `web/admin` app.
+- ✅ **Admin portal — DONE** (A1 read-only browser → A2 config+audit → A3 review
+  queue/appeals → A4 dashboards+keys). Full operator surface in `web/admin` with
+  Dashboard/Claims/Review/Appeals/Config/Access tabs; see
+  [docs/admin-portal-plan.md](docs/admin-portal-plan.md). Follow-ups: persistent
+  calibration ledger (§28.12), DB-backed KeyStore + OIDC/MFA, multi-approver change
+  control.
+- **End-to-end claim assessment** (in progress) — a single `POST /v1/assess` that
+  orchestrates extract → gather → score → persist and returns a traceable verdict,
+  plus an admin "Assess" tool to drive it. Makes the platform usable as a product
+  (today the pipeline only exists as cross-engine tests). Independence uses the Trust
+  Engine's built-in heuristic; graph-derived override remains a later enhancement.
 - **ADRs for open decisions** in ARCHITECTURE.md §8 (canonical record ownership,
   embeddings/chunking, multilingual pipeline, auth provider).
 - ✅ **Blueprint governance sections — DONE** (v1.2): Legal & Liability (§29),
@@ -315,6 +322,12 @@ Larger initiatives, not single mechanical loops — each needs its own scoping:
 
 ## Loop log (append-only, newest first)
 
+- **2026-06-21** — Assess pipeline AS1 (gateway orchestration) loop: new
+  `POST /v1/assess` (write-scoped) orchestrates claim extract → evidence gather →
+  score (+ persist) in one call and returns `{claim, evidence, result}`. Gateway only
+  orchestrates (INV-DETERMINISM); the verdict is produced + persisted by the Trust
+  Engine. 400 on missing text/claim_id, 502 on any pipeline-stage failure.
+  Verification: hermetic `./scripts/qa.sh` green (gateway 52 tests; all suites).
 - **2026-06-21** — Admin portal A4.4 (access-management UI) loop: admin app gains an
   `AccessManagement` component (new Access tab) — list keys by prefix (never the
   secret), create a key (label + scope checkboxes; plaintext shown once), and revoke
