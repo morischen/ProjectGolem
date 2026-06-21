@@ -300,6 +300,10 @@ Larger initiatives, not single mechanical loops — each needs its own scoping:
 - ✅ **AuthN/Z + rate limiting — DONE (first cut)**: API-key auth (scopes/RBAC) +
   in-memory rate limiting at the gateway. Follow-up: OIDC/MFA + a shared/distributed
   rate-limit store (blueprint §22).
+- **Admin portal** (not started) — full operator surface to review/adjust all
+  aspects. Plan: [docs/admin-portal-plan.md](docs/admin-portal-plan.md) (A1 read-only
+  browser → A2 config+audit → A3 review queue/appeals → A4 dashboards+keys). Large,
+  multi-loop; needs new backend admin APIs + a new `web/admin` app.
 - **ADRs for open decisions** in ARCHITECTURE.md §8 (canonical record ownership,
   embeddings/chunking, multilingual pipeline, auth provider).
 - ✅ **Blueprint governance sections — DONE** (v1.2): Legal & Liability (§29),
