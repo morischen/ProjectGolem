@@ -1,18 +1,26 @@
-"""Shared recorded LLM wrapper (ADR-0005).
+"""Shared recorded LLM wrapper (ADR-0005, ADR-0009).
 
 Every LLM call returns a `RecordedCall` capturing model id + prompt + inputs +
 output, so any LLM-assisted result is reproducible (INV-REPRO). The wrapper does
 language work only — it never produces a score or verdict (INV-DETERMINISM).
 
-`StubLLMClient` is the deterministic, network-free client for tests/offline use
-(returns preset outputs in sequence; the last repeats once exhausted).
-`AnthropicLLMClient` is the real implementation (Claude Opus 4.8, adaptive thinking).
+Clients:
+- `StubLLMClient` — deterministic, network-free; the default in tests/offline.
+- `OpenRouterLLMClient` — multi-model via OpenRouter (OpenAI-compatible API); the
+  preferred runtime provider (one key, many models). `model_id` is the OpenRouter
+  slug (e.g. `anthropic/claude-opus-4.8`, `openai/gpt-5`).
+- `AnthropicLLMClient` — Claude direct via the Anthropic SDK.
+
+`build_llm_from_env()` selects the runtime provider from environment variables.
 """
 
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass
-from typing import Protocol, runtime_checkable
+from typing import Any, Protocol, runtime_checkable
+
+DEFAULT_OPENROUTER_MODEL = "anthropic/claude-opus-4.8"  # override via OPENROUTER_MODEL
 
 
 @dataclass(frozen=True)
@@ -66,7 +74,7 @@ class AnthropicLLMClient:
     def complete(self, *, system: str, prompt: str, inputs: dict[str, str]) -> RecordedCall:
         import anthropic
 
-        client = anthropic.Anthropic()
+        client: Any = anthropic.Anthropic()
         message = client.messages.create(
             model=self._model_id,
             max_tokens=self._max_tokens,
@@ -88,4 +96,81 @@ class AnthropicLLMClient:
         )
 
 
-__all__ = ["RecordedCall", "LLMClient", "StubLLMClient", "AnthropicLLMClient"]
+class OpenRouterLLMClient:
+    """Multi-model client via OpenRouter's OpenAI-compatible API (ADR-0009).
+
+    `model_id` is an OpenRouter slug. The OpenAI-compatible client is built lazily
+    from `OPENROUTER_API_KEY` (optionally `OPENROUTER_SITE_URL` / `OPENROUTER_APP_NAME`
+    for attribution), or injected for tests — so this module needs no network/key to
+    import or unit-test.
+    """
+
+    def __init__(
+        self,
+        model_id: str = DEFAULT_OPENROUTER_MODEL,
+        *,
+        client: Any | None = None,
+        api_key: str | None = None,
+    ) -> None:
+        self._model_id = model_id
+        self._client = client
+        self._api_key = api_key
+
+    def _ensure_client(self) -> Any:
+        if self._client is None:
+            from openai import OpenAI
+
+            headers: dict[str, str] = {}
+            site = os.getenv("OPENROUTER_SITE_URL")
+            app = os.getenv("OPENROUTER_APP_NAME")
+            if site:
+                headers["HTTP-Referer"] = site
+            if app:
+                headers["X-Title"] = app
+            self._client = OpenAI(
+                base_url="https://openrouter.ai/api/v1",
+                api_key=self._api_key or os.environ["OPENROUTER_API_KEY"],
+                default_headers=headers or None,
+            )
+        return self._client
+
+    def complete(self, *, system: str, prompt: str, inputs: dict[str, str]) -> RecordedCall:
+        client = self._ensure_client()
+        response = client.chat.completions.create(
+            model=self._model_id,
+            messages=[
+                {"role": "system", "content": system},
+                {"role": "user", "content": prompt},
+            ],
+        )
+        content = response.choices[0].message.content
+        return RecordedCall(
+            model_id=self._model_id,
+            system=system,
+            prompt=prompt,
+            inputs=dict(inputs),
+            output=str(content or ""),
+        )
+
+
+def build_llm_from_env() -> LLMClient:
+    """Select the runtime LLM provider from env (ADR-0009).
+
+    `OPENROUTER_API_KEY` → OpenRouter (multi-model, `OPENROUTER_MODEL`); otherwise
+    Anthropic direct. Stub clients are injected explicitly in tests, never returned
+    here (they need preset outputs).
+    """
+    if os.getenv("OPENROUTER_API_KEY"):
+        return OpenRouterLLMClient(os.getenv("OPENROUTER_MODEL", DEFAULT_OPENROUTER_MODEL))
+    return AnthropicLLMClient()
+
+
+__all__ = [
+    "RecordedCall",
+    "LLMClient",
+    "StubLLMClient",
+    "OpenRouterLLMClient",
+    "AnthropicLLMClient",
+    "build_llm_from_env",
+    "DEFAULT_OPENROUTER_MODEL",
+]

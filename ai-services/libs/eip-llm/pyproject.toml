@@ -1,9 +1,15 @@
 [project]
 name = "eip-llm"
 version = "0.0.1"
-description = "Shared recorded LLM wrapper for EIP services (ADR-0005)."
+description = "Shared recorded LLM wrapper for EIP services (ADR-0005, ADR-0009)."
 requires-python = ">=3.12"
-dependencies = ["anthropic>=0.40"]
+dependencies = ["anthropic>=0.40", "openai>=1.40"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
+[dependency-groups]
+dev = ["mypy>=1.10", "pytest>=8.0", "ruff>=0.6"]
 
 [build-system]
 requires = ["hatchling"]
@@ -11,3 +17,20 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/eip_llm"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+addopts = "-ra"
+
+[tool.ruff]
+line-length = 100
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.mypy]
+files = ["src"]
+python_version = "3.12"
+strict = true

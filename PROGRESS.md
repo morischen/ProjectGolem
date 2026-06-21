@@ -49,6 +49,13 @@ Decisions locked:
   resistance. **14/14 pytest tests pass** (determinism, weights-sum, formula
   fixtures, all six verdicts, Insufficient/Mixed as real outcomes, contradiction
   flips Verified→Mixed). Added root `.gitignore`.
+- **2026-06-21** — **OpenRouter multi-model LLM** ([ADR-0009](docs/adr/0009-openrouter-multi-model.md)):
+  added `OpenRouterLLMClient` to `eip-llm` (OpenAI-compatible; one key, many models;
+  `model_id` = OpenRouter slug) + `build_llm_from_env()` selector (OpenRouter when
+  `OPENROUTER_API_KEY` set, else Anthropic). claim/evidence engines now default to it.
+  Hermetic (injectable client, fake in tests) — `eip-llm` is now a tested lib (5
+  tests) wired into the gate + CI. This is the chosen path to unblock real LLM use:
+  set `OPENROUTER_API_KEY` (+ `OPENROUTER_MODEL`) and the pipeline runs live.
 - **2026-06-21** — **Gateway → Trust Engine field passthrough**: the gateway's
   `/v1/score` now forwards `claim_id`, `independence`, and `event_time` to the Trust
   Engine, so verdict persistence (ADR-0008) and the independence override (ADR-0007)
@@ -258,8 +265,11 @@ Larger initiatives, not single mechanical loops — each needs its own scoping:
 - ✅ **Persistence & bitemporal verdicts — DONE** (Q1 store + Q2 SQL adapter + Q3
   persist-in-pipeline + history API). Follow-ups: a fuller action audit log (beyond
   verdict history), and gateway passthrough of `claim_id` to `/v1/score`.
-- **Real LLM enablement** — exercise `AnthropicLLMClient` end-to-end with an API
-  key behind a feature flag; calibration tests against the gold benchmark (§28).
+- **Real LLM enablement** (largely unblocked via OpenRouter, ADR-0009) — client +
+  env selector + hermetic tests done. Remaining (needs `OPENROUTER_API_KEY` +
+  network, can't verify in this sandbox): a guarded live integration test + smoke;
+  structured outputs (`messages.parse`/JSON-schema) for robust parsing; refusal/
+  rate-limit/timeout handling; calibration against the gold benchmark (§28).
 - ✅ **AuthN/Z + rate limiting — DONE (first cut)**: API-key auth (scopes/RBAC) +
   in-memory rate limiting at the gateway. Follow-up: OIDC/MFA + a shared/distributed
   rate-limit store (blueprint §22).
@@ -272,6 +282,9 @@ Larger initiatives, not single mechanical loops — each needs its own scoping:
 
 ## Loop log (append-only, newest first)
 
+- **2026-06-21** — OpenRouter multi-model loop: OpenRouterLLMClient +
+  build_llm_from_env selector in eip-llm (now a tested lib); engines default to it.
+  Verification: `./scripts/qa.sh` → eip-llm 5, all services green.
 - **2026-06-21** — Gateway field-passthrough loop: forward claim_id/independence/
   event_time to /v1/score. Verification: `./scripts/qa.sh` → gateway 20, all green.
 - **2026-06-20** — Gateway auth + rate-limit loop: API-key scopes + fixed-window

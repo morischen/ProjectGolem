@@ -9,7 +9,7 @@ to `AnthropicLLMClient`. The endpoint extracts/classifies only — it never scor
 
 from __future__ import annotations
 
-from eip_llm import AnthropicLLMClient, LLMClient
+from eip_llm import LLMClient, build_llm_from_env
 from fastapi import FastAPI
 from pydantic import BaseModel
 
@@ -23,7 +23,7 @@ class ExtractRequest(BaseModel):
 
 
 def create_app(llm: LLMClient | None = None) -> FastAPI:
-    engine_llm: LLMClient = llm if llm is not None else AnthropicLLMClient()
+    engine_llm: LLMClient = llm if llm is not None else build_llm_from_env()
     app = FastAPI(title="EIP Claim Engine", version="0.0.1")
 
     @app.get("/health")

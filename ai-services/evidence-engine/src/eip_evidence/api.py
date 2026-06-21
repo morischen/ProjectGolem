@@ -10,7 +10,7 @@ The LLM client is injectable. The engine classifies relation only; it never scor
 
 from __future__ import annotations
 
-from eip_llm import AnthropicLLMClient, LLMClient
+from eip_llm import LLMClient, build_llm_from_env
 from fastapi import FastAPI
 from pydantic import BaseModel, Field
 
@@ -27,7 +27,7 @@ class GatherRequest(BaseModel):
 
 
 def create_app(llm: LLMClient | None = None, retriever: Retriever | None = None) -> FastAPI:
-    engine_llm: LLMClient = llm if llm is not None else AnthropicLLMClient()
+    engine_llm: LLMClient = llm if llm is not None else build_llm_from_env()
     configured: Retriever | None = (
         retriever if retriever is not None else build_retriever_from_env()
     )
