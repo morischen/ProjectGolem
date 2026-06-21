@@ -20,9 +20,12 @@ from datetime import UTC, datetime
 from eip_persistence import (
     AuditRecord,
     AuditStore,
+    CalibrationRunRecord,
+    CalibrationStore,
     ConfigRecord,
     ConfigStore,
     InMemoryAuditStore,
+    InMemoryCalibrationStore,
     InMemoryConfigStore,
     InMemoryReviewStore,
     ReviewRecord,
@@ -43,7 +46,7 @@ from eip_trust.config_service import (
     weights_to_payload,
 )
 from eip_trust.engine import score_claim
-from eip_trust.metrics import compute_metrics
+from eip_trust.metrics import benchmark_metrics, compute_metrics
 from eip_trust.models import Evidence, ScoringWeights, TrustResult, Verdict
 
 _PROFILES = (DEFAULT_PROFILE, HISTORICAL_PROFILE)
@@ -178,12 +181,17 @@ def create_app(
     config_store: ConfigStore | None = None,
     audit_store: AuditStore | None = None,
     review_store: ReviewStore | None = None,
+    calibration_store: CalibrationStore | None = None,
 ) -> FastAPI:
     verdict_store: VerdictStore | None = store if store is not None else _build_store_from_env()
-    # Config/audit/review default to in-memory so the admin surface works w/o Postgres.
+    # Config/audit/review/calibration default to in-memory so the admin surface works
+    # without Postgres.
     cfg_store: ConfigStore = config_store if config_store is not None else InMemoryConfigStore()
     aud_store: AuditStore = audit_store if audit_store is not None else InMemoryAuditStore()
     rev_store: ReviewStore = review_store if review_store is not None else InMemoryReviewStore()
+    cal_store: CalibrationStore = (
+        calibration_store if calibration_store is not None else InMemoryCalibrationStore()
+    )
     seed_config_store(cfg_store, datetime.now(UTC))
 
     def _has_open_item(claim_id: str) -> bool:
@@ -439,6 +447,25 @@ def create_app(
     def metrics() -> MetricsView:
         snapshot = compute_metrics(verdict_store=verdict_store, review_store=rev_store)
         return MetricsView.model_validate(snapshot)
+
+    @app.get("/v1/calibration/runs", response_model=list[CalibrationRunRecord])
+    def list_calibration_runs(limit: int = 100, offset: int = 0) -> list[CalibrationRunRecord]:
+        return cal_store.list(limit=limit, offset=offset)
+
+    @app.post("/v1/calibration/runs", response_model=CalibrationRunRecord)
+    def record_calibration_run() -> CalibrationRunRecord:
+        # Re-run the gold benchmark now and append the result to the ledger (§28.12),
+        # so accuracy/calibration trends are tracked and regressions are visible.
+        bench = benchmark_metrics()
+        if bench is None:
+            raise HTTPException(status_code=503, detail="benchmark seed unavailable")
+        return cal_store.record(
+            recorded_time=datetime.now(UTC),
+            total=bench["total"],
+            verdict_accuracy=bench["verdict_accuracy"],
+            calibration_error=bench["calibration_error"],
+            payload={"by_difficulty": bench["by_difficulty"]},
+        )
 
     return app
 

@@ -9,6 +9,11 @@ from eip_persistence.audit_store import (
     InMemoryAuditStore,
     SqlAuditStore,
 )
+from eip_persistence.calibration_store import (
+    CalibrationStore,
+    InMemoryCalibrationStore,
+    SqlCalibrationStore,
+)
 from eip_persistence.config_store import (
     ConfigStore,
     InMemoryConfigStore,
@@ -16,6 +21,7 @@ from eip_persistence.config_store import (
 )
 from eip_persistence.models import (
     AuditRecord,
+    CalibrationRunRecord,
     ConfigRecord,
     ReviewRecord,
     VerdictRecord,
@@ -46,4 +52,8 @@ __all__ = [
     "ReviewStore",
     "InMemoryReviewStore",
     "SqlReviewStore",
+    "CalibrationRunRecord",
+    "CalibrationStore",
+    "InMemoryCalibrationStore",
+    "SqlCalibrationStore",
 ]

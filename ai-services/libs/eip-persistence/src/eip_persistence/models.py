@@ -61,6 +61,25 @@ class AuditRecord(BaseModel):
     after: dict[str, Any] | None = Field(default=None, description="New state, if any.")
 
 
+class CalibrationRunRecord(BaseModel):
+    """One recorded calibration/benchmark run (the calibration ledger, §28.12).
+
+    Append-only: each run is a timestamped snapshot of how the engine scored a
+    labeled set, so accuracy/calibration can be tracked over time and regressions
+    caught. Frozen; never mutated."""
+
+    model_config = ConfigDict(frozen=True)
+
+    id: int = Field(ge=1, description="Monotonic global sequence (1-based).")
+    recorded_time: datetime = Field(description="When this run was recorded.")
+    total: int = Field(ge=0, description="Number of labeled items scored.")
+    verdict_accuracy: float = Field(ge=0.0, le=1.0)
+    calibration_error: float = Field(ge=0.0, description="Expected calibration error.")
+    payload: dict[str, Any] = Field(
+        default_factory=dict, description="Full run detail (by-difficulty, model, notes)."
+    )
+
+
 class ReviewRecord(BaseModel):
     """One item in the human-review queue (FR-007 escalation + appeals).
 

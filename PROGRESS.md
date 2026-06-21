@@ -327,6 +327,12 @@ Larger initiatives, not single mechanical loops — each needs its own scoping:
 
 ## Loop log (append-only, newest first)
 
+- **2026-06-21** — Calibration ledger backend loop: `eip-persistence`
+  `CalibrationStore` (append-only run history, in-memory + SQL) + `CalibrationRunRecord`;
+  Trust Engine `POST /v1/calibration/runs` (re-runs the gold benchmark and records a
+  snapshot) + `GET /v1/calibration/runs` (newest first). Realizes the §28.12
+  calibration ledger. Verification: hermetic `make qa` green (persistence 64,
+  trust-engine 80; mypy/bench OK).
 - **2026-06-21** — ADRs for open decisions loop: recorded the four remaining
   ARCHITECTURE.md §8 open decisions as ADR-0010 (canonical record ownership: Postgres
   canonical + Neo4j projection — Accepted), ADR-0011 (embeddings + chunking —
