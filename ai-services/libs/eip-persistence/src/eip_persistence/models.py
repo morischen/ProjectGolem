@@ -59,3 +59,30 @@ class AuditRecord(BaseModel):
     knowledge_time: datetime = Field(description="When the action was recorded.")
     before: dict[str, Any] | None = Field(default=None, description="Prior state, if any.")
     after: dict[str, Any] | None = Field(default=None, description="New state, if any.")
+
+
+class ReviewRecord(BaseModel):
+    """One item in the human-review queue (FR-007 escalation + appeals).
+
+    Unlike verdicts/configs (append-only truth), a review item is operational state:
+    it starts `open` and is later `resolved`. The store replaces the item on
+    resolution; the durable trail of *what the resolution did* (an override → a new
+    verdict version, an audit entry) lives in the verdict store and audit log, not
+    here. Frozen so callers can't mutate a fetched copy in place."""
+
+    model_config = ConfigDict(frozen=True)
+
+    id: int = Field(ge=1, description="Monotonic global sequence (1-based).")
+    claim_id: str = Field(description="The claim under review.")
+    kind: str = Field(description="'low_confidence' | 'evidence_conflict' | 'appeal'.")
+    status: str = Field(description="'open' | 'resolved'.")
+    created_time: datetime = Field(description="When the item entered the queue.")
+    detail: dict[str, Any] = Field(
+        default_factory=dict, description="Context: score/conflict, or the appeal body."
+    )
+    resolution: dict[str, Any] | None = Field(
+        default=None, description="How it was resolved: reviewer, decision, override, note."
+    )
+    resolved_time: datetime | None = Field(
+        default=None, description="When it was resolved, if it has been."
+    )

@@ -252,10 +252,20 @@ Decisions locked:
 
 ## 🔄 In progress
 
-- _Nothing in flight._ Admin portal **A2 (scoring config & source reliability) is
-  complete** (data layer → Trust Engine → gateway → admin Config page). Next admin
-  milestone is **A3** (human review queue & appeals) — see Backlog and
+- **Admin portal A3 — human review queue & appeals** (FR-007 escalation +
+  functional appeals; realizes INV-OVERRIDE). Plan:
   [docs/admin-portal-plan.md](docs/admin-portal-plan.md).
+  - ✅ **A3.1 (data layer, done):** `eip-persistence` gains `ReviewStore`
+    (queue of items — `low_confidence`/`evidence_conflict`/`appeal`; `open`→`resolved`)
+    + `ReviewRecord` model, in-memory + SQL adapters. Operational state (mutable
+    status), distinct from the append-only verdict/config/audit stores.
+  - ⏭️ **A3.2 (next):** Trust Engine review endpoints (list/get/resolve); resolve
+    with an override appends a **new reviewer-attributed verdict version** (+ audit);
+    appeals submit/list; auto-enqueue low-confidence/conflict at score time.
+  - ⏭️ **A3.3:** gateway `admin`-scoped review/appeals routes + a **public**
+    appeal-submit route.
+  - ⏭️ **A3.4:** admin Review queue + override action + Appeals page; wire the public
+    portal's `AppealEntry` to the submit route.
 
 ---
 
@@ -315,6 +325,13 @@ Larger initiatives, not single mechanical loops — each needs its own scoping:
 
 ## Loop log (append-only, newest first)
 
+- **2026-06-21** — Admin portal A3.1 (data layer) loop: added `ReviewStore`
+  (human-review queue: items of kind low_confidence/evidence_conflict/appeal,
+  open→resolved) + `ReviewRecord` model to `eip-persistence`, with in-memory + SQL
+  adapters. Review items are operational state (mutable status) — distinct from the
+  append-only verdict/config/audit stores; the durable trail of a resolution lives
+  in those. Verification: hermetic `make qa` green (54 tests incl. SQLite parity;
+  mypy clean across 7 source files).
 - **2026-06-21** — Admin portal A2.4 (admin Config page) loop: extended the admin
   app's `adminApi` (getConfig/configHistory/listAudit/updateConfig with typed
   `ConfigRecord`/`ConfigView`/`AuditEntry`) and added a `ConfigEditor` component —

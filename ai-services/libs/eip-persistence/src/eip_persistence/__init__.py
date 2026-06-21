@@ -14,7 +14,17 @@ from eip_persistence.config_store import (
     InMemoryConfigStore,
     SqlConfigStore,
 )
-from eip_persistence.models import AuditRecord, ConfigRecord, VerdictRecord
+from eip_persistence.models import (
+    AuditRecord,
+    ConfigRecord,
+    ReviewRecord,
+    VerdictRecord,
+)
+from eip_persistence.review_store import (
+    InMemoryReviewStore,
+    ReviewStore,
+    SqlReviewStore,
+)
 from eip_persistence.sql_store import SqlVerdictStore, make_postgres_store
 from eip_persistence.store import InMemoryVerdictStore, VerdictStore
 
@@ -32,4 +42,8 @@ __all__ = [
     "AuditStore",
     "InMemoryAuditStore",
     "SqlAuditStore",
+    "ReviewRecord",
+    "ReviewStore",
+    "InMemoryReviewStore",
+    "SqlReviewStore",
 ]
