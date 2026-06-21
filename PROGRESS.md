@@ -49,6 +49,11 @@ Decisions locked:
   resistance. **14/14 pytest tests pass** (determinism, weights-sum, formula
   fixtures, all six verdicts, Insufficient/Mixed as real outcomes, contradiction
   flips Verified→Mixed). Added root `.gitignore`.
+- **2026-06-21** — **Dev `.env` credentials**: added committed `.env.example`
+  (documents every var — OpenRouter/Anthropic keys, gateway auth, data-store DSNs,
+  service URLs) and a gitignored local `.env`; `scripts/dev.sh` now loads `.env`
+  (`set -a; . .env`). Data-store vars are commented by default (Postgres connects at
+  startup); `EIP_API_KEYS` left unset so the portal stays keyless in dev.
 - **2026-06-21** — **OpenRouter multi-model LLM** ([ADR-0009](docs/adr/0009-openrouter-multi-model.md)):
   added `OpenRouterLLMClient` to `eip-llm` (OpenAI-compatible; one key, many models;
   `model_id` = OpenRouter slug) + `build_llm_from_env()` selector (OpenRouter when
@@ -282,6 +287,9 @@ Larger initiatives, not single mechanical loops — each needs its own scoping:
 
 ## Loop log (append-only, newest first)
 
+- **2026-06-21** — Dev .env loop: `.env.example` template + gitignored `.env` +
+  dev.sh auto-load. Verification: dev.sh `bash -n` OK; `.env` sources correctly;
+  `git check-ignore .env` confirms it won't be committed.
 - **2026-06-21** — OpenRouter multi-model loop: OpenRouterLLMClient +
   build_llm_from_env selector in eip-llm (now a tested lib); engines default to it.
   Verification: `./scripts/qa.sh` → eip-llm 5, all services green.

@@ -13,8 +13,9 @@ lives in the Python Trust Engine; INV-DETERMINISM).
 
 ## Common tasks (run from repo root)
 ```bash
+cp .env.example .env   # then fill in OPENROUTER_API_KEY (see .env.example); .env is gitignored
 pnpm install
-pnpm dev               # boot the FULL stack (engines + gateway :4000 + portal :3000)
+pnpm dev               # boot the FULL stack (engines + gateway :4000 + portal :3000); loads .env
 pnpm gen:contracts     # regenerate @eip/contracts TS types from ../contracts
 pnpm -r typecheck
 pnpm -r test

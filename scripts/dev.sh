@@ -14,6 +14,16 @@
 set -euo pipefail
 
 root="$(cd "$(dirname "$0")/.." && pwd)"
+
+# Load local dev credentials/config (gitignored). See .env.example.
+if [ -f "$root/.env" ]; then
+  echo "→ loading $root/.env"
+  set -a
+  # shellcheck disable=SC1091
+  . "$root/.env"
+  set +a
+fi
+
 pids=()
 
 cleanup() {
