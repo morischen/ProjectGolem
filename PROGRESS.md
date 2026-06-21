@@ -263,8 +263,10 @@ Decisions locked:
     `GET /v1/config`, `GET /v1/config/{profile}/history`, `POST /v1/config` (new
     version on edit, sum-to-1 enforced → 422, audited), `GET /v1/audit`; the score
     path now reads the **active** config version (records its label on verdicts).
-  - ⏭️ **A2.3 (next):** gateway `admin`-scoped `GET/POST /admin/config` (+ audit).
-  - ⏭️ **A2.4:** admin **Config** page (view + guarded edit + version/diff/history).
+  - ✅ **A2.3 (gateway, done):** `admin`-scoped proxies `GET /admin/config`,
+    `GET /admin/config/:profile/history`, `POST /admin/config` (preserves the
+    engine's 200/422), `GET /admin/audit`. `AdminClient` extended accordingly.
+  - ⏭️ **A2.4 (next):** admin **Config** page (view + guarded edit + version/history).
 
 ---
 
@@ -324,6 +326,12 @@ Larger initiatives, not single mechanical loops — each needs its own scoping:
 
 ## Loop log (append-only, newest first)
 
+- **2026-06-21** — Admin portal A2.3 (gateway config proxies) loop: extended
+  `AdminClient` (getConfig/configHistory/updateConfig/listAudit) and added
+  `admin`-scoped routes `GET /admin/config`, `GET /admin/config/:profile/history`,
+  `POST /admin/config` (forwards the engine's 200/422 verbatim so sum-to-1
+  rejections reach the UI), `GET /admin/audit`. Verification: hermetic
+  `./scripts/qa.sh` green (gateway 31 tests; all suites).
 - **2026-06-21** — Admin portal A2.2 (Trust Engine config) loop: new
   `config_service` (ScoringWeights ↔ ConfigStore: seed, serialize, resolve active,
   version labels) + endpoints `GET /v1/config`, `GET /v1/config/{profile}/history`,

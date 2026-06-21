@@ -218,5 +218,71 @@ export function buildApp(opts: AppOptions = {}): FastifyInstance {
     },
   );
 
+  // Scoring-config governance (A2): view + guarded, audited edit. The gateway
+  // forwards only; the Trust Engine owns versioning, validation, and the audit log.
+  app.get(
+    "/admin/config",
+    { preHandler: protect("admin") },
+    async (_request, reply) => {
+      try {
+        return await admin.getConfig();
+      } catch {
+        reply.code(502);
+        return { error: "trust-engine unavailable" };
+      }
+    },
+  );
+
+  app.get(
+    "/admin/config/:profile/history",
+    { preHandler: protect("admin") },
+    async (request, reply) => {
+      const { profile } = request.params as { profile: string };
+      try {
+        return await admin.configHistory(profile);
+      } catch {
+        reply.code(502);
+        return { error: "trust-engine unavailable" };
+      }
+    },
+  );
+
+  app.post(
+    "/admin/config",
+    { preHandler: protect("admin") },
+    async (request, reply) => {
+      try {
+        const result = await admin.updateConfig(request.body ?? {});
+        reply.code(result.status); // preserve 200 / 422 from the engine
+        return result.body;
+      } catch {
+        reply.code(502);
+        return { error: "trust-engine unavailable" };
+      }
+    },
+  );
+
+  app.get(
+    "/admin/audit",
+    { preHandler: protect("admin") },
+    async (request, reply) => {
+      const q = (request.query ?? {}) as {
+        limit?: string;
+        offset?: string;
+        target?: string;
+      };
+      try {
+        return await admin.listAudit({
+          limit: q.limit !== undefined ? Number(q.limit) : undefined,
+          offset: q.offset !== undefined ? Number(q.offset) : undefined,
+          target: q.target,
+        });
+      } catch {
+        reply.code(502);
+        return { error: "trust-engine unavailable" };
+      }
+    },
+  );
+
   return app;
 }
