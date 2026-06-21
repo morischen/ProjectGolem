@@ -252,21 +252,10 @@ Decisions locked:
 
 ## 🔄 In progress
 
-- **Admin portal A2 — scoring config & source reliability** (view → guarded edit +
-  audit). Plan: [docs/admin-portal-plan.md](docs/admin-portal-plan.md).
-  - ✅ **A2.1 (data layer, done):** `eip-persistence` gains `ConfigStore` (versioned,
-    per-profile, append-only) and `AuditStore` (append-only action log), each with
-    in-memory + SQL adapters and `ConfigRecord`/`AuditRecord` models. Schema-agnostic
-    payloads keep the lib dependency-light (ScoringWeights shape stays in trust-engine).
-  - ✅ **A2.2 (Trust Engine, done):** `config_service` bridges `ScoringWeights` ↔
-    the schema-agnostic `ConfigStore` (seeds default+historical, resolves active);
-    `GET /v1/config`, `GET /v1/config/{profile}/history`, `POST /v1/config` (new
-    version on edit, sum-to-1 enforced → 422, audited), `GET /v1/audit`; the score
-    path now reads the **active** config version (records its label on verdicts).
-  - ✅ **A2.3 (gateway, done):** `admin`-scoped proxies `GET /admin/config`,
-    `GET /admin/config/:profile/history`, `POST /admin/config` (preserves the
-    engine's 200/422), `GET /admin/audit`. `AdminClient` extended accordingly.
-  - ⏭️ **A2.4 (next):** admin **Config** page (view + guarded edit + version/history).
+- _Nothing in flight._ Admin portal **A2 (scoring config & source reliability) is
+  complete** (data layer → Trust Engine → gateway → admin Config page). Next admin
+  milestone is **A3** (human review queue & appeals) — see Backlog and
+  [docs/admin-portal-plan.md](docs/admin-portal-plan.md).
 
 ---
 
@@ -326,6 +315,14 @@ Larger initiatives, not single mechanical loops — each needs its own scoping:
 
 ## Loop log (append-only, newest first)
 
+- **2026-06-21** — Admin portal A2.4 (admin Config page) loop: extended the admin
+  app's `adminApi` (getConfig/configHistory/listAudit/updateConfig with typed
+  `ConfigRecord`/`ConfigView`/`AuditEntry`) and added a `ConfigEditor` component —
+  view active weights/tier-reliability/thresholds, edit with **live sum-to-1
+  validation** (save disabled until valid + actor present), profile switch
+  (default/historical), version history, and 422 surfacing; tab nav (Claims/Config/
+  Sign out) in `page.tsx`. Verification: hermetic `./scripts/qa.sh` green (admin 15
+  tests; all suites); `pnpm build` (admin) succeeds. **A2 done.**
 - **2026-06-21** — Admin portal A2.3 (gateway config proxies) loop: extended
   `AdminClient` (getConfig/configHistory/updateConfig/listAudit) and added
   `admin`-scoped routes `GET /admin/config`, `GET /admin/config/:profile/history`,
