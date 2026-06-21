@@ -51,6 +51,20 @@ describe("AssessClaim", () => {
     expect(body.candidates).toEqual([]);
   });
 
+  it("forwards citations for graph-derived independence", async () => {
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue(json(RESULT));
+    render(<AssessClaim apiKey="write-key" />);
+    fireEvent.change(screen.getByLabelText("citations json"), {
+      target: { value: '[["s2","s1"]]' },
+    });
+    await fillAndSubmit();
+    await screen.findByText(/Verdict: Verified/);
+    const body = JSON.parse(String(fetchSpy.mock.calls[0][1]?.body));
+    expect(body.citations).toEqual([["s2", "s1"]]);
+  });
+
   it("rejects invalid candidates JSON before calling the gateway", async () => {
     const fetchSpy = vi
       .spyOn(globalThis, "fetch")

@@ -32,12 +32,22 @@ function clients(
 ) {
   const extract = vi.fn(async () => CLAIM);
   const gather = vi.fn(async () => EVIDENCE);
+  const independence = vi.fn(async () => ({
+    distinct_sources: 1,
+    independent_groups: 1,
+    independence_ratio: 0.5,
+    groups: [["s1"]],
+  }));
   const score = vi.fn(async () => RESULT);
   return {
     claim: { extract, ...overrides.claim } as unknown as ClaimClient,
-    evidence: { gather, ...overrides.evidence } as unknown as EvidenceClient,
+    evidence: {
+      gather,
+      independence,
+      ...overrides.evidence,
+    } as unknown as EvidenceClient,
     scorer: { score, ...overrides.scorer } as unknown as ScorerClient,
-    spies: { extract, gather, score },
+    spies: { extract, gather, independence, score },
   };
 }
 
@@ -99,6 +109,46 @@ describe("gateway /v1/assess (end-to-end orchestration)", () => {
     });
     expect(c.spies.score).toHaveBeenCalledWith(
       expect.objectContaining({ evidence: EVIDENCE, claimId: "c1" }),
+    );
+    await app.close();
+  });
+
+  it("derives independence from citations and passes it to scoring", async () => {
+    const c = clients();
+    const app = buildApp({ ...c, apiKeys: keys });
+    const res = await app.inject({
+      method: "POST",
+      url: "/v1/assess",
+      headers: { "x-api-key": "writer" },
+      payload: {
+        text: "x",
+        claim_id: "c1",
+        citations: [["s2", "s1"]],
+      },
+    });
+    expect(res.statusCode).toBe(200);
+    expect(c.spies.independence).toHaveBeenCalledWith({
+      sourceIds: ["s1"],
+      citations: [["s2", "s1"]],
+    });
+    expect(c.spies.score).toHaveBeenCalledWith(
+      expect.objectContaining({ independence: 0.5 }),
+    );
+    await app.close();
+  });
+
+  it("omits independence (heuristic) when no citations are given", async () => {
+    const c = clients();
+    const app = buildApp({ ...c, apiKeys: keys });
+    await app.inject({
+      method: "POST",
+      url: "/v1/assess",
+      headers: { "x-api-key": "writer" },
+      payload: { text: "x", claim_id: "c1" },
+    });
+    expect(c.spies.independence).not.toHaveBeenCalled();
+    expect(c.spies.score).toHaveBeenCalledWith(
+      expect.objectContaining({ independence: undefined }),
     );
     await app.close();
   });

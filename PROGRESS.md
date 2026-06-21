@@ -312,8 +312,10 @@ Larger initiatives, not single mechanical loops — each needs its own scoping:
   orchestration + AS2 admin "Assess" tab). One call runs extract → gather → score →
   persist and returns `{claim, evidence, result}`; the admin tool drives it and
   renders the verdict + breakdown + evidence. Independence uses the Trust Engine's
-  built-in heuristic; graph-derived override + a public claim-submission surface
-  remain later enhancements.
+  built-in heuristic by default; a **graph-derived override** is now wired through
+  `/v1/assess` (optional `citations` → evidence-engine `/v1/independence` → score),
+  see the Independence loops. A public claim-submission surface remains a later
+  enhancement.
 - **ADRs for open decisions** in ARCHITECTURE.md §8 (canonical record ownership,
   embeddings/chunking, multilingual pipeline, auth provider).
 - ✅ **Blueprint governance sections — DONE** (v1.2): Legal & Liability (§29),
@@ -323,6 +325,13 @@ Larger initiatives, not single mechanical loops — each needs its own scoping:
 
 ## Loop log (append-only, newest first)
 
+- **2026-06-21** — Independence IND2 (thread through assess) loop: `EvidenceClient`
+  gains `independence()`; gateway `/v1/assess` accepts optional `citations` —
+  derives `independence_ratio` from the gathered sources via the evidence engine and
+  passes it to scoring as the ADR-0007 override (omitted → Trust Engine heuristic).
+  Admin `AssessClaim` gains a citations input (validated). Completes the
+  graph-independence-through-assess follow-up. Verification: hermetic
+  `./scripts/qa.sh` green (gateway 54, admin 29; all suites).
 - **2026-06-21** — Independence IND1 (evidence endpoint) loop: evidence-engine
   `POST /v1/independence` exposes `assess_independence` (source_ids + citations →
   distinct/independent-group counts + `independence_ratio` + groups), so

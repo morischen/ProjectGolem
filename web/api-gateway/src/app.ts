@@ -63,6 +63,8 @@ interface AssessBody {
   text?: string;
   claim_id?: string;
   candidates?: unknown[];
+  /** Citation edges (a cites b) for graph-derived independence (ADR-0007). */
+  citations?: [string, string][];
   historical?: boolean;
   event_time?: string | null;
 }
@@ -209,11 +211,24 @@ export function buildApp(opts: AppOptions = {}): FastifyInstance {
           claimText: claimObj.text,
           candidates,
         });
+        // When citations are supplied, derive the graph-based independence_ratio and
+        // pass it as a scoring override (ADR-0007); otherwise the Trust Engine uses
+        // its built-in count heuristic.
+        let independence: number | undefined;
+        if (Array.isArray(body.citations) && body.citations.length > 0) {
+          const sourceIds = ev.map((e) => e.source_id);
+          const report = await evidence.independence({
+            sourceIds,
+            citations: body.citations,
+          });
+          independence = report.independence_ratio;
+        }
         const result = await scorer.score({
           evidence: ev,
           historical: body.historical,
           claimId: body.claim_id,
           eventTime: body.event_time,
+          independence,
         });
         return { claim: claimObj, evidence: ev, result };
       } catch {

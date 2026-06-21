@@ -245,6 +245,7 @@ export async function assess(
     text: string;
     claim_id: string;
     candidates?: unknown[];
+    citations?: [string, string][];
     historical?: boolean;
   },
 ): Promise<AssessResult> {

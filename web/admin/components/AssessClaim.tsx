@@ -18,6 +18,7 @@ export function AssessClaim({
   const [text, setText] = useState("");
   const [claimId, setClaimId] = useState("");
   const [candidatesJson, setCandidatesJson] = useState("[]");
+  const [citationsJson, setCitationsJson] = useState("[]");
   const [result, setResult] = useState<AssessResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -40,12 +41,23 @@ export function AssessClaim({
       return;
     }
 
+    let citations: [string, string][];
+    try {
+      const parsed = JSON.parse(citationsJson || "[]");
+      if (!Array.isArray(parsed)) throw new Error("not an array");
+      citations = parsed as [string, string][];
+    } catch {
+      setError("Citations must be a JSON array of [from, to] pairs.");
+      return;
+    }
+
     setBusy(true);
     try {
       const res = await assess(apiKey, {
         text: text.trim(),
         claim_id: claimId.trim(),
         candidates,
+        citations,
       });
       setResult(res);
     } catch (err: unknown) {
@@ -93,6 +105,14 @@ export function AssessClaim({
             value={candidatesJson}
             onChange={(e) => setCandidatesJson(e.target.value)}
             aria-label="candidates json"
+          />
+        </label>
+        <label>
+          Citations — JSON array of [from, to] pairs (independence){" "}
+          <textarea
+            value={citationsJson}
+            onChange={(e) => setCitationsJson(e.target.value)}
+            aria-label="citations json"
           />
         </label>
         <button type="submit" disabled={!canSubmit}>
