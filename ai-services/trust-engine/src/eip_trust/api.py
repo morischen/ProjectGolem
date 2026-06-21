@@ -138,6 +138,16 @@ class AppealRequest(BaseModel):
     submitter: str | None = Field(default=None, description="Optional submitter identity.")
 
 
+class AuditCreateRequest(BaseModel):
+    """Record an admin action in the central audit log (e.g. from the gateway)."""
+
+    actor: str = Field(min_length=1)
+    action: str = Field(min_length=1)
+    target: str = Field(min_length=1)
+    before: dict[str, object] | None = None
+    after: dict[str, object] | None = None
+
+
 class BenchmarkMetrics(BaseModel):
     total: int
     verdict_accuracy: float
@@ -283,6 +293,19 @@ def create_app(
         limit: int = 100, offset: int = 0, target: str | None = None
     ) -> list[AuditRecord]:
         return aud_store.list(limit=limit, offset=offset, target=target)
+
+    @app.post("/v1/audit", response_model=AuditRecord)
+    def record_audit(request: AuditCreateRequest) -> AuditRecord:
+        # Central audit sink: lets the gateway log admin actions it owns (e.g. API-key
+        # management) into the same tamper-evident trail (blueprint §20).
+        return aud_store.record(
+            actor=request.actor,
+            action=request.action,
+            target=request.target,
+            knowledge_time=datetime.now(UTC),
+            before=request.before,
+            after=request.after,
+        )
 
     @app.get("/v1/claims", response_model=list[VerdictRecord])
     def list_claims(limit: int = 100, offset: int = 0) -> list[VerdictRecord]:

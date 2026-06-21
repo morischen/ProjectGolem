@@ -260,9 +260,12 @@ Decisions locked:
     `GET /admin/metrics`. Pure read — re-runs the deterministic engine over the seed.
   - ✅ **A4.2 (dashboard, done):** admin **Dashboard** page (verdict accuracy,
     calibration error, by-difficulty, review-queue health, claims count) — default tab.
-  - ⏭️ **A4.3 (next):** gateway `KeyStore` (managed, hashed, env-seeded) + auth consults it
-    + `admin`-scoped `/admin/keys` CRUD; Trust Engine `POST /v1/audit` for logging.
-  - ⏭️ **A4.4:** admin **Access-management** page (keys/roles CRUD).
+  - ✅ **A4.3 (access mgmt backend, done):** Trust Engine `POST /v1/audit` (central
+    sink). Gateway `KeyStore` (SHA-256-hashed keys, env-seeded, in-memory); auth now
+    resolves via the store; `admin`-scoped `GET/POST /admin/keys` +
+    `POST /admin/keys/:id/disable` (plaintext returned once; changes mirrored to the
+    audit log). Backward-compatible: env keys still authenticate.
+  - ⏭️ **A4.4 (next):** admin **Access-management** page (keys/roles CRUD).
 
 ---
 
@@ -322,6 +325,14 @@ Larger initiatives, not single mechanical loops — each needs its own scoping:
 
 ## Loop log (append-only, newest first)
 
+- **2026-06-21** — Admin portal A4.3 (access-management backend) loop: Trust Engine
+  `POST /v1/audit` (central audit sink). Gateway gains a `KeyStore` — API keys held
+  only as SHA-256 hashes, seeded from `EIP_API_KEYS` (backward compatible), with
+  `create` (plaintext shown once), `authenticate`, `list` (metadata only), and soft
+  `disable`. `requireScope` now resolves through the store. New `admin`-scoped
+  `GET/POST /admin/keys` + `POST /admin/keys/:id/disable`, mirrored to the audit log
+  (best-effort). Verification: hermetic `./scripts/qa.sh` green (trust-engine 77,
+  gateway 48; all suites; mypy/bench OK).
 - **2026-06-21** — Admin portal A4.2 (dashboard) loop: admin app gains a `Dashboard`
   component (now the default tab) showing gold-benchmark verdict accuracy +
   calibration error + by-difficulty, review-queue health (open/resolved/by-kind), and

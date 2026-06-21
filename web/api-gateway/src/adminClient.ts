@@ -169,6 +169,21 @@ export class AdminClient {
     return this.get<Record<string, unknown>>("/v1/metrics");
   }
 
+  /** Best-effort: record an admin action (e.g. key management) in the audit log. */
+  async recordAudit(entry: {
+    actor: string;
+    action: string;
+    target: string;
+    before?: Record<string, unknown> | null;
+    after?: Record<string, unknown> | null;
+  }): Promise<void> {
+    await fetch(`${this.baseUrl}/v1/audit`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(entry),
+    });
+  }
+
   async listAppeals(
     input: { limit?: number; offset?: number } = {},
   ): Promise<ReviewRecord[]> {

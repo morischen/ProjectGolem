@@ -7,7 +7,12 @@ import { ScorerClient } from "./scorerClient";
 import { ClaimClient } from "./claimClient";
 import { EvidenceClient } from "./evidenceClient";
 import { AdminClient } from "./adminClient";
-import { type ApiKeyMap, loadApiKeysFromEnv, requireScope } from "./auth";
+import {
+  type ApiKeyMap,
+  KeyStore,
+  loadApiKeysFromEnv,
+  requireScope,
+} from "./auth";
 import { type RateLimitOptions, rateLimitHook } from "./rateLimit";
 
 // The six allowed verdicts, typed against the generated contract (drift fails the
@@ -30,6 +35,8 @@ export interface AppOptions {
   admin?: AdminClient;
   /** API keys → scopes. Empty/omitted → auth disabled (dev). Default: from env. */
   apiKeys?: ApiKeyMap;
+  /** Managed key store. Default: a KeyStore seeded from `apiKeys`. */
+  keyStore?: KeyStore;
   /** Rate-limit config, or null to disable. Default: 120 requests / 60s. */
   rateLimit?: RateLimitOptions | null;
 }
@@ -68,7 +75,8 @@ export function buildApp(opts: AppOptions = {}): FastifyInstance {
     opts.admin ??
     new AdminClient(process.env.TRUST_ENGINE_URL ?? "http://localhost:8000");
 
-  const apiKeys = opts.apiKeys ?? loadApiKeysFromEnv();
+  const keyStore =
+    opts.keyStore ?? new KeyStore(opts.apiKeys ?? loadApiKeysFromEnv());
   const rateLimitOpts =
     opts.rateLimit === null
       ? null
@@ -78,7 +86,7 @@ export function buildApp(opts: AppOptions = {}): FastifyInstance {
   const protect = (scope: string): preHandlerHookHandler[] => {
     const handlers: preHandlerHookHandler[] = [];
     if (rateLimitOpts) handlers.push(rateLimitHook(rateLimitOpts));
-    handlers.push(requireScope(apiKeys, scope));
+    handlers.push(requireScope(keyStore, scope));
     return handlers;
   };
 
@@ -379,6 +387,78 @@ export function buildApp(opts: AppOptions = {}): FastifyInstance {
         reply.code(502);
         return { error: "trust-engine unavailable" };
       }
+    },
+  );
+
+  // Access management (A4): managed API keys with admin CRUD. Key material lives in
+  // the gateway (auth boundary); changes are mirrored into the Trust Engine audit log.
+  app.get("/admin/keys", { preHandler: protect("admin") }, async () =>
+    keyStore.list(),
+  );
+
+  app.post(
+    "/admin/keys",
+    { preHandler: protect("admin") },
+    async (request, reply) => {
+      const body = (request.body ?? {}) as {
+        label?: string;
+        scopes?: unknown;
+      };
+      if (typeof body.label !== "string" || !Array.isArray(body.scopes)) {
+        reply.code(400);
+        return {
+          error: "body.label (string) and body.scopes (array) required",
+        };
+      }
+      const scopes = body.scopes.filter(
+        (s): s is string => typeof s === "string",
+      );
+      const { plaintext, meta } = keyStore.create({
+        label: body.label,
+        scopes,
+      });
+      // Audit is best-effort: never block key creation if the engine is down.
+      try {
+        await admin.recordAudit({
+          actor: "admin",
+          action: "key.create",
+          target: `key:${meta.id}`,
+          after: {
+            label: meta.label,
+            scopes: meta.scopes,
+            prefix: meta.prefix,
+          },
+        });
+      } catch {
+        /* audit is best-effort */
+      }
+      reply.code(201);
+      // The plaintext is returned exactly once.
+      return { key: plaintext, meta };
+    },
+  );
+
+  app.post(
+    "/admin/keys/:id/disable",
+    { preHandler: protect("admin") },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      const meta = keyStore.disable(id);
+      if (meta === undefined) {
+        reply.code(404);
+        return { error: "no such key" };
+      }
+      try {
+        await admin.recordAudit({
+          actor: "admin",
+          action: "key.disable",
+          target: `key:${id}`,
+          after: { disabled: true },
+        });
+      } catch {
+        /* audit is best-effort */
+      }
+      return meta;
     },
   );
 

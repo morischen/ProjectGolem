@@ -78,6 +78,7 @@ function fakeAdmin(overrides: Partial<AdminClient> = {}): AdminClient {
       queue: { open: 1, resolved: 0, by_kind: { evidence_conflict: 1 } },
       claims_count: 1,
     }),
+    recordAudit: async () => {},
     ...overrides,
   } as unknown as AdminClient;
 }

@@ -79,6 +79,23 @@ def test_post_config_requires_an_actor():
     assert client.post("/v1/config", json=body).status_code == 422
 
 
+def test_post_audit_records_a_gateway_action():
+    client = _client()
+    res = client.post(
+        "/v1/audit",
+        json={
+            "actor": "admin",
+            "action": "key.create",
+            "target": "key:abc",
+            "after": {"label": "ci"},
+        },
+    )
+    assert res.status_code == 200
+    assert res.json()["action"] == "key.create"
+    entries = client.get("/v1/audit", params={"target": "key:abc"}).json()
+    assert len(entries) == 1 and entries[0]["actor"] == "admin"
+
+
 def test_config_history_lists_versions_oldest_first():
     client = _client()
     client.post("/v1/config", json=_valid_weights(source_reliability=0.35, freshness=0.05))
