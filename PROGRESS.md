@@ -327,6 +327,15 @@ Larger initiatives, not single mechanical loops — each needs its own scoping:
 
 ## Loop log (append-only, newest first)
 
+- **2026-06-21** — Local embedder + graph seeding loop (ADR-0011/0010): added
+  `HashingEmbedder` — a real (if simple) offline lexical embedder (hashed
+  bag-of-words + TF, L2-normalized, Unicode-tokenized for AR/HE/EN) behind the
+  ADR-0006 `Embedder` seam; `build_retriever_from_env` now uses it (EMBED_DIM-tunable)
+  instead of the wiring stub. Added `graph_schema.py` (idempotent Neo4j constraints +
+  indexes) + `apply_schema` + `scripts/seed_graph.py` (env-driven, `--dry-run`).
+  Verification: hermetic `make qa` green (evidence-engine 40; similar-text cosine >
+  dissimilar; seed dry-run prints 6 statements). A hosted multilingual model + live
+  Neo4j execution remain deferred (infra).
 - **2026-06-21** — Rate-limit store seam loop (blueprint §22): refactored the gateway
   limiter behind a `RateLimitStore` interface (one `hit()` method) with an
   `InMemoryRateLimitStore` default; `createRateLimiter`/`rateLimitHook` accept an

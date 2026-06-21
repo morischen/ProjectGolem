@@ -8,7 +8,7 @@ from eip_llm import AnthropicLLMClient, LLMClient, RecordedCall, StubLLMClient
 
 from eip_evidence._generated.evidence import Evidence, EvidenceRelation
 from eip_evidence.composite import CompositeRetriever, build_retriever_from_env
-from eip_evidence.embedding import Embedder, StubEmbedder
+from eip_evidence.embedding import Embedder, HashingEmbedder, StubEmbedder
 from eip_evidence.engine import GatherResult, build_prompt, classify_candidate, gather
 from eip_evidence.graph_retriever import GraphRetriever
 from eip_evidence.graphstore import GraphHit, GraphStore, Neo4jGraphStore, make_neo4j_store
@@ -36,6 +36,7 @@ __all__ = [
     "SemanticRetriever",
     "Embedder",
     "StubEmbedder",
+    "HashingEmbedder",
     "VectorStore",
     "VectorHit",
     "QdrantVectorStore",

@@ -36,12 +36,15 @@ def build_retriever_from_env() -> Retriever | None:
 
     qdrant_url = os.getenv("QDRANT_URL")
     if qdrant_url:
-        from eip_evidence.embedding import StubEmbedder
+        from eip_evidence.embedding import HashingEmbedder
         from eip_evidence.semantic_retriever import SemanticRetriever
         from eip_evidence.vectorstore import make_qdrant_store
 
+        # Real offline embedder (lexical, deterministic) until a hosted multilingual
+        # model lands (ADR-0011). EMBED_DIM tunes the feature-hashing dimension.
+        embedder = HashingEmbedder(dim=int(os.getenv("EMBED_DIM", "256")))
         vector_store = make_qdrant_store(qdrant_url, os.getenv("QDRANT_COLLECTION", "evidence"))
-        retrievers.append(SemanticRetriever(StubEmbedder(), vector_store))
+        retrievers.append(SemanticRetriever(embedder, vector_store))
 
     neo4j_uri = os.getenv("NEO4J_URI")
     if neo4j_uri:
