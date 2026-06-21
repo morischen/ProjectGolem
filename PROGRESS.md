@@ -49,6 +49,12 @@ Decisions locked:
   resistance. **14/14 pytest tests pass** (determinism, weights-sum, formula
   fixtures, all six verdicts, Insufficient/Mixed as real outcomes, contradiction
   flips Verified→Mixed). Added root `.gitignore`.
+- **2026-06-20** — **Gateway auth + rate limiting** (Backlog #4): API-key auth with
+  scopes/RBAC (`requireScope`; `EIP_API_KEYS` env, `x-api-key` header; 401/403) and an
+  injectable-clock in-memory fixed-window rate limiter (`createRateLimiter`/
+  `rateLimitHook`; 429 + `x-ratelimit-remaining`). The three `/v1/*` proxy routes are
+  protected (scope `write`); health/info stay public; no keys → dev/open mode. 8 new
+  vitest tests (gateway 19). (OIDC/MFA per §22 noted as the next cut.)
 - **2026-06-20** — **Governance docs** (blueprint patch → v1.2): wrote the three
   sections flagged in the original review — **§25 Budget (revised)** with the omitted
   line items (data licensing, legal/insurance, certifications, reviewer/labeler pay,
@@ -249,7 +255,9 @@ Larger initiatives, not single mechanical loops — each needs its own scoping:
   verdict history), and gateway passthrough of `claim_id` to `/v1/score`.
 - **Real LLM enablement** — exercise `AnthropicLLMClient` end-to-end with an API
   key behind a feature flag; calibration tests against the gold benchmark (§28).
-- **AuthN/Z + rate limiting** — OIDC, RBAC, MFA at the gateway (blueprint §22).
+- ✅ **AuthN/Z + rate limiting — DONE (first cut)**: API-key auth (scopes/RBAC) +
+  in-memory rate limiting at the gateway. Follow-up: OIDC/MFA + a shared/distributed
+  rate-limit store (blueprint §22).
 - **ADRs for open decisions** in ARCHITECTURE.md §8 (canonical record ownership,
   embeddings/chunking, multilingual pipeline, auth provider).
 - ✅ **Blueprint governance sections — DONE** (v1.2): Legal & Liability (§29),
@@ -259,6 +267,8 @@ Larger initiatives, not single mechanical loops — each needs its own scoping:
 
 ## Loop log (append-only, newest first)
 
+- **2026-06-20** — Gateway auth + rate-limit loop: API-key scopes + fixed-window
+  limiter on `/v1/*`. Verification: `./scripts/qa.sh` → gateway 19, all services green.
 - **2026-06-20** — Governance-docs loop: blueprint patch → v1.2 (§25 Budget revised,
   §29 Legal & Liability, §30 Platform Threat Model). Docs-only; no code changes.
 - **2026-06-19** — Persistence Q3 loop: Trust Engine persists verdicts (claim_id +
