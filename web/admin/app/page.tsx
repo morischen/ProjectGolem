@@ -6,8 +6,9 @@ import { ClaimsBrowser } from "../components/ClaimsBrowser";
 import { ConfigEditor } from "../components/ConfigEditor";
 import { ReviewQueue } from "../components/ReviewQueue";
 import { Dashboard } from "../components/Dashboard";
+import { AccessManagement } from "../components/AccessManagement";
 
-type Tab = "dashboard" | "claims" | "config" | "review" | "appeals";
+type Tab = "dashboard" | "claims" | "config" | "review" | "appeals" | "access";
 
 const TABS: { id: Tab; label: string }[] = [
   { id: "dashboard", label: "Dashboard" },
@@ -15,6 +16,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "review", label: "Review" },
   { id: "appeals", label: "Appeals" },
   { id: "config", label: "Config" },
+  { id: "access", label: "Access" },
 ];
 
 export default function AdminPage() {
@@ -55,6 +57,9 @@ export default function AdminPage() {
       )}
       {tab === "config" && (
         <ConfigEditor apiKey={apiKey} onAuthError={signOut} />
+      )}
+      {tab === "access" && (
+        <AccessManagement apiKey={apiKey} onAuthError={signOut} />
       )}
     </>
   );

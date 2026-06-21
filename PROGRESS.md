@@ -252,20 +252,10 @@ Decisions locked:
 
 ## 🔄 In progress
 
-- **Admin portal A4 — calibration/bias dashboard & access management.** Plan:
-  [docs/admin-portal-plan.md](docs/admin-portal-plan.md).
-  - ✅ **A4.1 (metrics endpoint, done):** Trust Engine `metrics` module + `GET
-    /v1/metrics` (gold-benchmark verdict accuracy + calibration error + by-difficulty,
-    review-queue health open/resolved/by-kind, claims count); gateway `admin`-scoped
-    `GET /admin/metrics`. Pure read — re-runs the deterministic engine over the seed.
-  - ✅ **A4.2 (dashboard, done):** admin **Dashboard** page (verdict accuracy,
-    calibration error, by-difficulty, review-queue health, claims count) — default tab.
-  - ✅ **A4.3 (access mgmt backend, done):** Trust Engine `POST /v1/audit` (central
-    sink). Gateway `KeyStore` (SHA-256-hashed keys, env-seeded, in-memory); auth now
-    resolves via the store; `admin`-scoped `GET/POST /admin/keys` +
-    `POST /admin/keys/:id/disable` (plaintext returned once; changes mirrored to the
-    audit log). Backward-compatible: env keys still authenticate.
-  - ⏭️ **A4.4 (next):** admin **Access-management** page (keys/roles CRUD).
+- _Nothing in flight._ Admin portal **A4 (calibration dashboard & access
+  management) is complete** — which completes the **entire A1–A4 admin portal**
+  ([docs/admin-portal-plan.md](docs/admin-portal-plan.md)). Pick the next initiative
+  from Backlog when ready.
 
 ---
 
@@ -325,6 +315,12 @@ Larger initiatives, not single mechanical loops — each needs its own scoping:
 
 ## Loop log (append-only, newest first)
 
+- **2026-06-21** — Admin portal A4.4 (access-management UI) loop: admin app gains an
+  `AccessManagement` component (new Access tab) — list keys by prefix (never the
+  secret), create a key (label + scope checkboxes; plaintext shown once), and revoke
+  (soft-disable), via `listKeys`/`createKey`/`disableKey` → `/admin/keys`.
+  **Completes A4 and the full A1–A4 admin portal.** Verification: hermetic
+  `./scripts/qa.sh` green (admin 25 tests; all suites); `pnpm build` (admin) succeeds.
 - **2026-06-21** — Admin portal A4.3 (access-management backend) loop: Trust Engine
   `POST /v1/audit` (central audit sink). Gateway gains a `KeyStore` — API keys held
   only as SHA-256 hashes, seeded from `EIP_API_KEYS` (backward compatible), with

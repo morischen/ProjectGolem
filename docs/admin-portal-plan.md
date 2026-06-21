@@ -118,8 +118,14 @@ audit; queue endpoints; admin UI + portal appeal-submit tests.
 
 ---
 
-## A4 — Calibration/bias dashboard & access management
+## A4 — Calibration/bias dashboard & access management  ✅ DONE (2026-06-21)
 **Goal:** surface the trust metrics and manage who can do what.
+
+Delivered: Trust Engine `GET /v1/metrics` (benchmark accuracy/ECE + queue health +
+claims count) and central `POST /v1/audit`; gateway `KeyStore` (SHA-256-hashed,
+env-seeded) with admin `/admin/metrics` + `/admin/keys` CRUD; admin Dashboard and
+Access-management pages. Note: metrics are a live snapshot (a persistent calibration
+ledger §28.12 and DB-backed KeyStore/OIDC remain future work).
 
 **Backend**
 - **Metrics endpoint**: serve calibration + benchmark results (verdict accuracy, ECE,

@@ -60,6 +60,16 @@ export interface AuditEntry {
   after: Record<string, unknown> | null;
 }
 
+/** Public metadata for a managed API key (never the secret). */
+export interface KeyMeta {
+  id: string;
+  label: string;
+  scopes: string[];
+  prefix: string;
+  createdAt: string;
+  disabled: boolean;
+}
+
 export interface MetricsView {
   benchmark: {
     total: number;
@@ -203,6 +213,52 @@ export async function updateConfig(
 /** Calibration / queue-health snapshot, via GET /admin/metrics. */
 export function getMetrics(apiKey: string): Promise<MetricsView> {
   return get<MetricsView>("/admin/metrics", apiKey);
+}
+
+/** Managed API keys (metadata only), via GET /admin/keys. */
+export function listKeys(apiKey: string): Promise<KeyMeta[]> {
+  return get<KeyMeta[]>("/admin/keys", apiKey);
+}
+
+/**
+ * Mint a new API key. Returns the plaintext exactly once (`key`) plus its metadata;
+ * the secret is never recoverable afterward.
+ */
+export async function createKey(
+  apiKey: string,
+  body: { label: string; scopes: string[] },
+): Promise<{ key: string; meta: KeyMeta }> {
+  const res = await fetch(`${GATEWAY_URL}/admin/keys`, {
+    method: "POST",
+    headers: { "content-type": "application/json", "x-api-key": apiKey },
+    body: JSON.stringify(body),
+  });
+  const json = await res.json();
+  if (!res.ok) {
+    throw new AdminApiError(
+      `create key failed (${res.status})`,
+      res.status,
+      json,
+    );
+  }
+  return json as { key: string; meta: KeyMeta };
+}
+
+/** Soft-disable (revoke) a key. */
+export async function disableKey(apiKey: string, id: string): Promise<KeyMeta> {
+  const res = await fetch(
+    `${GATEWAY_URL}/admin/keys/${encodeURIComponent(id)}/disable`,
+    { method: "POST", headers: { "x-api-key": apiKey } },
+  );
+  const json = await res.json();
+  if (!res.ok) {
+    throw new AdminApiError(
+      `disable key failed (${res.status})`,
+      res.status,
+      json,
+    );
+  }
+  return json as KeyMeta;
 }
 
 /** Review-queue items (newest first), via GET /admin/review. */
