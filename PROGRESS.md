@@ -316,8 +316,10 @@ Larger initiatives, not single mechanical loops — each needs its own scoping:
   `/v1/assess` (optional `citations` → evidence-engine `/v1/independence` → score),
   see the Independence loops. A public claim-submission surface remains a later
   enhancement.
-- **ADRs for open decisions** in ARCHITECTURE.md §8 (canonical record ownership,
-  embeddings/chunking, multilingual pipeline, auth provider).
+- ✅ **ADRs for open decisions — DONE**: ARCHITECTURE.md §8 decisions recorded as
+  ADR-0010 (Postgres canonical + Neo4j projection, Accepted), 0011 (embeddings +
+  chunking, Proposed), 0012 (multilingual pipeline, Proposed), 0013 (auth: API keys
+  now, OIDC later, Proposed). §8 now links to them.
 - ✅ **Blueprint governance sections — DONE** (v1.2): Legal & Liability (§29),
   Platform Threat Model (§30), Budget revision (§25).
 
@@ -325,6 +327,12 @@ Larger initiatives, not single mechanical loops — each needs its own scoping:
 
 ## Loop log (append-only, newest first)
 
+- **2026-06-21** — ADRs for open decisions loop: recorded the four remaining
+  ARCHITECTURE.md §8 open decisions as ADR-0010 (canonical record ownership: Postgres
+  canonical + Neo4j projection — Accepted), ADR-0011 (embeddings + chunking —
+  Proposed), ADR-0012 (multilingual pipeline — Proposed), ADR-0013 (auth: API keys
+  now, OIDC later — Proposed); updated the ADR index and §8 to link them. Docs-only;
+  verification: ADR files exist and links resolve.
 - **2026-06-21** — Independence IND2 (thread through assess) loop: `EvidenceClient`
   gains `independence()`; gateway `/v1/assess` accepts optional `citations` —
   derives `independence_ratio` from the gathered sources via the evidence engine and

@@ -203,13 +203,20 @@ parallel and is attached to the response but **never** to the score.
 
 ---
 
-## 8. Open architectural decisions (track as ADRs in [docs/adr/](docs/adr/))
+## 8. Architectural decisions (recorded as ADRs in [docs/adr/](docs/adr/))
 
-- Contract codegen toolchain (datamodel-code-generator for Pydantic; which TS
-  generator) — to be fixed in the first scaffolding loop.
-- Graph vs. Postgres ownership of canonical claim/verdict records (current intent:
-  Postgres canonical + Neo4j projection for traversal).
-- Embedding model + chunking strategy for Qdrant.
-- Multilingual pipeline (Arabic/Hebrew/English from day one per §23 L0) — where
-  translation sits and how language parity is measured.
-- Auth provider selection (OIDC).
+The decisions once open here are now recorded as ADRs (Accepted = settled; Proposed =
+direction agreed, implementation pending):
+
+- Contract codegen toolchain — [ADR-0004](docs/adr/0004-contract-codegen-toolchain.md)
+  (Accepted).
+- Graph vs. Postgres ownership of canonical claim/verdict records: Postgres canonical
+  + Neo4j projection — [ADR-0010](docs/adr/0010-canonical-record-ownership.md)
+  (Accepted).
+- Embedding model + chunking strategy for Qdrant —
+  [ADR-0011](docs/adr/0011-embeddings-and-chunking.md) (Proposed).
+- Multilingual pipeline (Arabic/Hebrew/English per §23 L0): originals authoritative,
+  translate for processing, parity measured —
+  [ADR-0012](docs/adr/0012-multilingual-pipeline.md) (Proposed).
+- Auth provider: API keys for services now, OIDC for humans later —
+  [ADR-0013](docs/adr/0013-auth-provider-oidc.md) (Proposed).

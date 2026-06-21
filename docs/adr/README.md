@@ -34,3 +34,7 @@ Routine, easily-reversed choices do not need an ADR — put those in code commen
 | [0007](0007-independence-citation-laundering.md) | Independence / citation-laundering detection | Accepted |
 | [0008](0008-bitemporal-verdict-store.md) | Bitemporal verdict persistence | Accepted |
 | [0009](0009-openrouter-multi-model.md) | LLM access via OpenRouter (multi-model) | Accepted |
+| [0010](0010-canonical-record-ownership.md) | Canonical record ownership: Postgres canonical, Neo4j projection | Accepted |
+| [0011](0011-embeddings-and-chunking.md) | Embedding model and chunking strategy | Proposed |
+| [0012](0012-multilingual-pipeline.md) | Multilingual pipeline: originals authoritative | Proposed |
+| [0013](0013-auth-provider-oidc.md) | Auth provider: API keys now, OIDC for humans later | Proposed |
