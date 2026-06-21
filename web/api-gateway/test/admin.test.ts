@@ -68,6 +68,16 @@ function fakeAdmin(overrides: Partial<AdminClient> = {}): AdminClient {
       status: 200,
       body: { ...REVIEW_ITEM, kind: "appeal" },
     }),
+    getMetrics: async () => ({
+      benchmark: {
+        total: 9,
+        verdict_accuracy: 1,
+        calibration_error: 0.2,
+        by_difficulty: {},
+      },
+      queue: { open: 1, resolved: 0, by_kind: { evidence_conflict: 1 } },
+      claims_count: 1,
+    }),
     ...overrides,
   } as unknown as AdminClient;
 }
@@ -315,6 +325,30 @@ describe("gateway admin browse routes", () => {
       payload: { claim_id: "c1", appeal_type: "nope", body: "x" },
     });
     expect(res.statusCode).toBe(422);
+    await app.close();
+  });
+
+  it("403 on metrics without the admin scope", async () => {
+    const app = buildApp({ apiKeys: keys, admin: fakeAdmin() });
+    const res = await app.inject({
+      method: "GET",
+      url: "/admin/metrics",
+      headers: { "x-api-key": "writer" },
+    });
+    expect(res.statusCode).toBe(403);
+    await app.close();
+  });
+
+  it("200 returns metrics with an admin key", async () => {
+    const app = buildApp({ apiKeys: keys, admin: fakeAdmin() });
+    const res = await app.inject({
+      method: "GET",
+      url: "/admin/metrics",
+      headers: { "x-api-key": "admin-key" },
+    });
+    expect(res.statusCode).toBe(200);
+    expect(res.json().benchmark.verdict_accuracy).toBe(1);
+    expect(res.json().queue.open).toBe(1);
     await app.close();
   });
 });

@@ -43,6 +43,7 @@ from eip_trust.config_service import (
     weights_to_payload,
 )
 from eip_trust.engine import score_claim
+from eip_trust.metrics import compute_metrics
 from eip_trust.models import Evidence, ScoringWeights, TrustResult, Verdict
 
 _PROFILES = (DEFAULT_PROFILE, HISTORICAL_PROFILE)
@@ -135,6 +136,25 @@ class AppealRequest(BaseModel):
     appeal_type: str = Field(description="'new_evidence' | 'source_challenge' | 'methodology'.")
     body: str = Field(min_length=1, description="The substance of the appeal.")
     submitter: str | None = Field(default=None, description="Optional submitter identity.")
+
+
+class BenchmarkMetrics(BaseModel):
+    total: int
+    verdict_accuracy: float
+    calibration_error: float
+    by_difficulty: dict[str, float]
+
+
+class QueueHealth(BaseModel):
+    open: int
+    resolved: int
+    by_kind: dict[str, int]
+
+
+class MetricsView(BaseModel):
+    benchmark: BenchmarkMetrics | None
+    queue: QueueHealth
+    claims_count: int
 
 
 def _build_store_from_env() -> VerdictStore | None:
@@ -391,6 +411,11 @@ def create_app(
         # Appeals are review items of kind 'appeal'; filter the queue.
         appeals = [r for r in rev_store.list(limit=10_000) if r.kind == "appeal"]
         return appeals[offset : offset + limit]
+
+    @app.get("/v1/metrics", response_model=MetricsView)
+    def metrics() -> MetricsView:
+        snapshot = compute_metrics(verdict_store=verdict_store, review_store=rev_store)
+        return MetricsView.model_validate(snapshot)
 
     return app
 

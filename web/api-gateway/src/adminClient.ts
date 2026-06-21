@@ -165,6 +165,10 @@ export class AdminClient {
     return { status: res.status, body: await res.json() };
   }
 
+  async getMetrics(): Promise<Record<string, unknown>> {
+    return this.get<Record<string, unknown>>("/v1/metrics");
+  }
+
   async listAppeals(
     input: { limit?: number; offset?: number } = {},
   ): Promise<ReviewRecord[]> {

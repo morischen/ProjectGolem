@@ -368,6 +368,20 @@ export function buildApp(opts: AppOptions = {}): FastifyInstance {
     },
   );
 
+  // Calibration / queue-health metrics for the admin dashboard (A4).
+  app.get(
+    "/admin/metrics",
+    { preHandler: protect("admin") },
+    async (_request, reply) => {
+      try {
+        return await admin.getMetrics();
+      } catch {
+        reply.code(502);
+        return { error: "trust-engine unavailable" };
+      }
+    },
+  );
+
   // Public appeal submission — no API key, but rate-limited. Anyone may challenge a
   // verdict; the appeal lands in the review queue and is logged publicly.
   app.post(
