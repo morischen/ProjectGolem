@@ -109,10 +109,12 @@ class OpenRouterLLMClient:
         self,
         model_id: str = DEFAULT_OPENROUTER_MODEL,
         *,
+        max_tokens: int = 1024,
         client: Any | None = None,
         api_key: str | None = None,
     ) -> None:
         self._model_id = model_id
+        self._max_tokens = max_tokens
         self._client = client
         self._api_key = api_key
 
@@ -138,6 +140,7 @@ class OpenRouterLLMClient:
         client = self._ensure_client()
         response = client.chat.completions.create(
             model=self._model_id,
+            max_tokens=self._max_tokens,
             messages=[
                 {"role": "system", "content": system},
                 {"role": "user", "content": prompt},
@@ -161,7 +164,10 @@ def build_llm_from_env() -> LLMClient:
     here (they need preset outputs).
     """
     if os.getenv("OPENROUTER_API_KEY"):
-        return OpenRouterLLMClient(os.getenv("OPENROUTER_MODEL", DEFAULT_OPENROUTER_MODEL))
+        return OpenRouterLLMClient(
+            os.getenv("OPENROUTER_MODEL", DEFAULT_OPENROUTER_MODEL),
+            max_tokens=int(os.getenv("OPENROUTER_MAX_TOKENS", "1024")),
+        )
     return AnthropicLLMClient()
 
 

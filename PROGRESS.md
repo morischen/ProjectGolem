@@ -49,6 +49,10 @@ Decisions locked:
   resistance. **14/14 pytest tests pass** (determinism, weights-sum, formula
   fixtures, all six verdicts, Insufficient/Mixed as real outcomes, contradiction
   flips Verified→Mixed). Added root `.gitignore`.
+- **2026-06-21** — **OpenRouter live-verified** + `max_tokens` cap: confirmed the
+  real path works (`OpenRouterLLMClient` → `anthropic/claude-opus-4.8` → "OK").
+  Added `max_tokens` to `OpenRouterLLMClient` (default 1024; `OPENROUTER_MAX_TOKENS`
+  env) — without it OpenRouter assumes the model max and 402s on low-credit keys.
 - **2026-06-21** — **Dev `.env` credentials**: added committed `.env.example`
   (documents every var — OpenRouter/Anthropic keys, gateway auth, data-store DSNs,
   service URLs) and a gitignored local `.env`; `scripts/dev.sh` now loads `.env`
