@@ -6,7 +6,8 @@
 #   claim-engine     :8001   (FastAPI)
 #   evidence-engine  :8002   (FastAPI)
 #   api-gateway      :4000   (Fastify; proxies to the engines above)
-#   portal           :3000   (Next.js; points at the gateway on :4000)
+#   portal           :3000   (Next.js, public; points at the gateway on :4000)
+#   admin            :3001   (Next.js, admin; points at the gateway on :4000)
 #
 # The gateway runs on :4000 (not :3000) so it doesn't collide with the portal.
 # Requires uv and pnpm (ADR-0002). Run from anywhere:  bash scripts/dev.sh
@@ -52,8 +53,10 @@ PORT=4000 start "api-gateway     :4000" web/api-gateway \
   pnpm start
 GATEWAY_URL=http://localhost:4000 start "portal          :3000" web/portal \
   pnpm dev
+NEXT_PUBLIC_GATEWAY_URL=http://localhost:4000 start "admin           :3001" web/admin \
+  pnpm dev --port 3001
 
 echo
-echo "EIP dev stack up → portal: http://localhost:3000  (gateway :4000, engines :8000/:8001/:8002)"
+echo "EIP dev stack up → portal: http://localhost:3000  admin: http://localhost:3001  (gateway :4000, engines :8000/:8001/:8002)"
 echo "Press Ctrl-C to stop."
 wait

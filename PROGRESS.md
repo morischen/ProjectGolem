@@ -252,14 +252,9 @@ Decisions locked:
 
 ## 🔄 In progress
 
-- **Admin portal A1 — read-only verdict browser.** Plan:
-  [docs/admin-portal-plan.md](docs/admin-portal-plan.md).
-  - ✅ **A1.1 (backend, done):** `VerdictStore.list_claims()` (in-memory + SQL,
-    latest-per-claim, paginated); Trust Engine `GET /v1/claims`; gateway
-    `admin`-scoped proxies `GET /admin/claims`, `/admin/claims/:id/verdicts`,
-    `/admin/claims/:id/verdict`.
-  - ⏭️ **A1.2 (frontend, next):** `web/admin` Next.js app (API-key login, claims
-    list + claim detail), wired into the pnpm workspace, CI, and QA.
+- _Nothing in flight._ Admin portal **A1 (read-only verdict browser) is complete**
+  (backend + frontend). Next admin milestone is **A2** (config + audit) — see
+  Backlog and [docs/admin-portal-plan.md](docs/admin-portal-plan.md).
 
 ---
 
@@ -319,6 +314,13 @@ Larger initiatives, not single mechanical loops — each needs its own scoping:
 
 ## Loop log (append-only, newest first)
 
+- **2026-06-21** — Admin portal A1.2 (frontend) loop: new `web/admin` Next.js app
+  (`@eip/admin`) — API-key login (`admin` scope) + read-only claims list +
+  per-claim verdict-history drill-down, calling the gateway `/admin/*` proxies via
+  `lib/adminApi`. Wired into the pnpm workspace (`web/*` glob → auto CI/QA), dev.sh
+  (`:3001`, points at gateway `:4000`), and `.prettierignore` (Next-managed files).
+  Verification: hermetic `./scripts/qa.sh` green (admin 8 tests, portal 10, gateway
+  26, all suites); `pnpm build` (admin) succeeds (4 static routes). **A1 done.**
 - **2026-06-21** — Admin portal A1.1 (backend) loop: `VerdictStore.list_claims()`
   (in-memory + SQL, latest-per-claim, paginated) + Trust Engine `GET /v1/claims` +
   gateway `admin`-scoped `/admin/claims[...]` proxies (new `AdminClient`). Also let
