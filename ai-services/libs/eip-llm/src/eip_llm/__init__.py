@@ -16,11 +16,16 @@ Clients:
 
 from __future__ import annotations
 
+import json
 import os
+import re
 from dataclasses import dataclass
 from typing import Any, Protocol, runtime_checkable
 
 DEFAULT_OPENROUTER_MODEL = "anthropic/claude-opus-4.8"  # override via OPENROUTER_MODEL
+
+# OpenAI-compatible "JSON mode" — nudges the model to emit a single JSON object.
+JSON_OBJECT_RESPONSE_FORMAT: dict[str, Any] = {"type": "json_object"}
 
 
 @dataclass(frozen=True)
@@ -34,7 +39,14 @@ class RecordedCall:
 
 @runtime_checkable
 class LLMClient(Protocol):
-    def complete(self, *, system: str, prompt: str, inputs: dict[str, str]) -> RecordedCall: ...
+    def complete(
+        self,
+        *,
+        system: str,
+        prompt: str,
+        inputs: dict[str, str],
+        response_format: dict[str, Any] | None = None,
+    ) -> RecordedCall: ...
 
 
 class StubLLMClient:
@@ -49,7 +61,14 @@ class StubLLMClient:
         self._model_id = model_id
         self.calls: list[RecordedCall] = []
 
-    def complete(self, *, system: str, prompt: str, inputs: dict[str, str]) -> RecordedCall:
+    def complete(
+        self,
+        *,
+        system: str,
+        prompt: str,
+        inputs: dict[str, str],
+        response_format: dict[str, Any] | None = None,
+    ) -> RecordedCall:
         output = self._outputs[min(self._index, len(self._outputs) - 1)]
         self._index += 1
         call = RecordedCall(
@@ -71,7 +90,16 @@ class AnthropicLLMClient:
         self._model_id = model_id
         self._max_tokens = max_tokens
 
-    def complete(self, *, system: str, prompt: str, inputs: dict[str, str]) -> RecordedCall:
+    def complete(
+        self,
+        *,
+        system: str,
+        prompt: str,
+        inputs: dict[str, str],
+        response_format: dict[str, Any] | None = None,
+    ) -> RecordedCall:
+        # response_format is honored by the OpenRouter client; Anthropic-direct
+        # uses prompting + the tolerant parser instead.
         import anthropic
 
         client: Any = anthropic.Anthropic()
@@ -136,16 +164,26 @@ class OpenRouterLLMClient:
             )
         return self._client
 
-    def complete(self, *, system: str, prompt: str, inputs: dict[str, str]) -> RecordedCall:
+    def complete(
+        self,
+        *,
+        system: str,
+        prompt: str,
+        inputs: dict[str, str],
+        response_format: dict[str, Any] | None = None,
+    ) -> RecordedCall:
         client = self._ensure_client()
-        response = client.chat.completions.create(
-            model=self._model_id,
-            max_tokens=self._max_tokens,
-            messages=[
+        kwargs: dict[str, Any] = {
+            "model": self._model_id,
+            "max_tokens": self._max_tokens,
+            "messages": [
                 {"role": "system", "content": system},
                 {"role": "user", "content": prompt},
             ],
-        )
+        }
+        if response_format is not None:
+            kwargs["response_format"] = response_format
+        response = client.chat.completions.create(**kwargs)
         content = response.choices[0].message.content
         return RecordedCall(
             model_id=self._model_id,
@@ -154,6 +192,55 @@ class OpenRouterLLMClient:
             inputs=dict(inputs),
             output=str(content or ""),
         )
+
+
+def extract_json(text: str) -> dict[str, Any]:
+    """Tolerantly extract a single JSON object from LLM output.
+
+    Handles bare JSON, ```json fenced blocks, and JSON embedded in prose by scanning
+    for the first balanced `{...}`. Raises ValueError if no JSON object is found —
+    the safety net behind structured-output `response_format`, since not every model
+    honors it.
+    """
+    s = text.strip()
+    if s.startswith("```"):
+        s = re.sub(r"^```[a-zA-Z0-9]*\n?", "", s)
+        s = re.sub(r"\n?```$", "", s).strip()
+
+    try:
+        parsed = json.loads(s)
+        if isinstance(parsed, dict):
+            return parsed
+    except json.JSONDecodeError:
+        pass
+
+    start = s.find("{")
+    if start == -1:
+        raise ValueError("no JSON object found in text")
+    depth = 0
+    in_str = False
+    esc = False
+    for i in range(start, len(s)):
+        ch = s[i]
+        if in_str:
+            if esc:
+                esc = False
+            elif ch == "\\":
+                esc = True
+            elif ch == '"':
+                in_str = False
+        elif ch == '"':
+            in_str = True
+        elif ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+            if depth == 0:
+                obj = json.loads(s[start : i + 1])
+                if not isinstance(obj, dict):
+                    raise ValueError("extracted JSON is not an object")
+                return obj
+    raise ValueError("unbalanced JSON object in text")
 
 
 def build_llm_from_env() -> LLMClient:
@@ -178,5 +265,7 @@ __all__ = [
     "OpenRouterLLMClient",
     "AnthropicLLMClient",
     "build_llm_from_env",
+    "extract_json",
     "DEFAULT_OPENROUTER_MODEL",
+    "JSON_OBJECT_RESPONSE_FORMAT",
 ]

@@ -2,12 +2,16 @@
 
 from types import SimpleNamespace
 
+import pytest
+
 from eip_llm import (
+    JSON_OBJECT_RESPONSE_FORMAT,
     AnthropicLLMClient,
     OpenRouterLLMClient,
     RecordedCall,
     StubLLMClient,
     build_llm_from_env,
+    extract_json,
 )
 
 
@@ -68,3 +72,33 @@ def test_build_llm_from_env_prefers_openrouter(monkeypatch):
 def test_build_llm_from_env_falls_back_to_anthropic(monkeypatch):
     monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
     assert isinstance(build_llm_from_env(), AnthropicLLMClient)
+
+
+def test_openrouter_forwards_response_format():
+    fake = _FakeOpenAI('{"ok": true}')
+    client = OpenRouterLLMClient("x/y", client=fake)
+    client.complete(system="s", prompt="p", inputs={}, response_format=JSON_OBJECT_RESPONSE_FORMAT)
+    assert fake.last_kwargs is not None
+    assert fake.last_kwargs["response_format"] == {"type": "json_object"}
+    assert fake.last_kwargs["max_tokens"] == 1024
+
+
+class TestExtractJson:
+    def test_plain_object(self):
+        assert extract_json('{"a": 1}') == {"a": 1}
+
+    def test_fenced_block(self):
+        assert extract_json('```json\n{"a": 1}\n```') == {"a": 1}
+
+    def test_embedded_in_prose(self):
+        text = 'Sure! Here it is:\n{"relation": "supports"}\nHope that helps.'
+        assert extract_json(text) == {"relation": "supports"}
+
+    def test_ignores_braces_inside_strings(self):
+        assert extract_json('{"note": "a } brace in a string"}') == {
+            "note": "a } brace in a string"
+        }
+
+    def test_raises_without_object(self):
+        with pytest.raises(ValueError):
+            extract_json("no json here")

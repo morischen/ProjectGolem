@@ -8,10 +8,9 @@ fails loudly rather than propagating.
 
 from __future__ import annotations
 
-import json
 from dataclasses import dataclass
 
-from eip_llm import LLMClient, RecordedCall
+from eip_llm import JSON_OBJECT_RESPONSE_FORMAT, LLMClient, RecordedCall, extract_json
 
 from eip_claim._generated.claim import Claim
 
@@ -47,8 +46,9 @@ def extract_claim(text: str, *, claim_id: str, llm: LLMClient) -> ExtractionResu
         system=SYSTEM_PROMPT,
         prompt=prompt,
         inputs={"claim_id": claim_id, "text": text},
+        response_format=JSON_OBJECT_RESPONSE_FORMAT,
     )
-    data = json.loads(call.output)
+    data = extract_json(call.output)
     data.setdefault("id", claim_id)
     claim = Claim.model_validate(data)
     return ExtractionResult(claim=claim, call=call)

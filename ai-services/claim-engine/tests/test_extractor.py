@@ -52,7 +52,7 @@ def test_explicit_id_in_output_is_preserved():
 
 
 def test_invalid_json_raises():
-    with pytest.raises(json.JSONDecodeError):
+    with pytest.raises(ValueError):
         extract_claim("t", claim_id="c5", llm=StubLLMClient("not json"))
 
 

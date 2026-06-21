@@ -49,6 +49,14 @@ Decisions locked:
   resistance. **14/14 pytest tests pass** (determinism, weights-sum, formula
   fixtures, all six verdicts, Insufficient/Mixed as real outcomes, contradiction
   flips Verified→Mixed). Added root `.gitignore`.
+- **2026-06-21** — **Structured outputs + guarded live tests** (Backlog #3): added a
+  `response_format` passthrough (OpenAI-compatible JSON mode, `JSON_OBJECT_RESPONSE_FORMAT`)
+  and a tolerant `extract_json` parser (handles fences/prose/embedded JSON) to
+  `eip-llm`; claim-engine + evidence-engine now request JSON mode and parse with it.
+  Added guarded live integration tests (`test_live.py`, skip without an LLM key) for
+  both engines. **Live-verified**: both passed against `anthropic/claude-opus-4.8`
+  via OpenRouter. Hermetic gate stays green (live tests skip): eip-llm 11, claim 15
+  (+1 skipped), evidence 29 (+1 skipped).
 - **2026-06-21** — **OpenRouter live-verified** + `max_tokens` cap: confirmed the
   real path works (`OpenRouterLLMClient` → `anthropic/claude-opus-4.8` → "OK").
   Added `max_tokens` to `OpenRouterLLMClient` (default 1024; `OPENROUTER_MAX_TOKENS`
@@ -274,11 +282,11 @@ Larger initiatives, not single mechanical loops — each needs its own scoping:
 - ✅ **Persistence & bitemporal verdicts — DONE** (Q1 store + Q2 SQL adapter + Q3
   persist-in-pipeline + history API). Follow-ups: a fuller action audit log (beyond
   verdict history), and gateway passthrough of `claim_id` to `/v1/score`.
-- **Real LLM enablement** (largely unblocked via OpenRouter, ADR-0009) — client +
-  env selector + hermetic tests done. Remaining (needs `OPENROUTER_API_KEY` +
-  network, can't verify in this sandbox): a guarded live integration test + smoke;
-  structured outputs (`messages.parse`/JSON-schema) for robust parsing; refusal/
-  rate-limit/timeout handling; calibration against the gold benchmark (§28).
+- **Real LLM enablement** (via OpenRouter, ADR-0009) — ✅ client + env selector +
+  hermetic tests + **structured outputs** (JSON mode + tolerant parser) + **guarded
+  live integration tests** (live-verified against Opus 4.8 via OpenRouter). Remaining:
+  refusal/rate-limit/timeout handling, and **calibration** against the gold benchmark
+  (§28) with the real LLM (needs credits + a run).
 - ✅ **AuthN/Z + rate limiting — DONE (first cut)**: API-key auth (scopes/RBAC) +
   in-memory rate limiting at the gateway. Follow-up: OIDC/MFA + a shared/distributed
   rate-limit store (blueprint §22).
@@ -291,6 +299,12 @@ Larger initiatives, not single mechanical loops — each needs its own scoping:
 
 ## Loop log (append-only, newest first)
 
+- **2026-06-21** — Structured-outputs + live-tests loop: response_format JSON mode +
+  extract_json in eip-llm; engines use them; guarded live tests (skip without key).
+  Verification: hermetic `./scripts/qa.sh` green (live skipped); live tests PASS with
+  the key (claim + evidence vs Opus 4.8 via OpenRouter).
+- **2026-06-21** — OpenRouter live-verify + max_tokens cap loop: confirmed real call;
+  capped OpenRouter max_tokens (default 1024).
 - **2026-06-21** — Dev .env loop: `.env.example` template + gitignored `.env` +
   dev.sh auto-load. Verification: dev.sh `bash -n` OK; `.env` sources correctly;
   `git check-ignore .env` confirms it won't be committed.

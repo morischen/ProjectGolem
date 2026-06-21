@@ -8,10 +8,9 @@ The LLM assigns the *relation* only — it never scores truth or confidence
 
 from __future__ import annotations
 
-import json
 from dataclasses import dataclass
 
-from eip_llm import LLMClient, RecordedCall
+from eip_llm import JSON_OBJECT_RESPONSE_FORMAT, LLMClient, RecordedCall, extract_json
 
 from eip_evidence._generated.evidence import Evidence, EvidenceRelation
 from eip_evidence.models import Candidate
@@ -48,8 +47,9 @@ def classify_candidate(
         system=SYSTEM_PROMPT,
         prompt=build_prompt(claim_text, candidate),
         inputs={"candidate_id": candidate.id, "source_id": candidate.source_id},
+        response_format=JSON_OBJECT_RESPONSE_FORMAT,
     )
-    relation = EvidenceRelation(json.loads(call.output)["relation"])
+    relation = EvidenceRelation(extract_json(call.output)["relation"])
     evidence = Evidence(
         id=candidate.id,
         source_id=candidate.source_id,
