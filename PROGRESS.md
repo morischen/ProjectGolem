@@ -308,11 +308,12 @@ Larger initiatives, not single mechanical loops — each needs its own scoping:
   [docs/admin-portal-plan.md](docs/admin-portal-plan.md). Follow-ups: persistent
   calibration ledger (§28.12), DB-backed KeyStore + OIDC/MFA, multi-approver change
   control.
-- **End-to-end claim assessment** (in progress) — a single `POST /v1/assess` that
-  orchestrates extract → gather → score → persist and returns a traceable verdict,
-  plus an admin "Assess" tool to drive it. Makes the platform usable as a product
-  (today the pipeline only exists as cross-engine tests). Independence uses the Trust
-  Engine's built-in heuristic; graph-derived override remains a later enhancement.
+- ✅ **End-to-end claim assessment — DONE** (AS1 gateway `POST /v1/assess`
+  orchestration + AS2 admin "Assess" tab). One call runs extract → gather → score →
+  persist and returns `{claim, evidence, result}`; the admin tool drives it and
+  renders the verdict + breakdown + evidence. Independence uses the Trust Engine's
+  built-in heuristic; graph-derived override + a public claim-submission surface
+  remain later enhancements.
 - **ADRs for open decisions** in ARCHITECTURE.md §8 (canonical record ownership,
   embeddings/chunking, multilingual pipeline, auth provider).
 - ✅ **Blueprint governance sections — DONE** (v1.2): Legal & Liability (§29),
@@ -322,6 +323,13 @@ Larger initiatives, not single mechanical loops — each needs its own scoping:
 
 ## Loop log (append-only, newest first)
 
+- **2026-06-21** — Assess pipeline AS2 (admin Assess tool) loop: admin app gains an
+  `AssessClaim` component (new Assess tab) — submit claim text + claim id + optional
+  evidence candidates (JSON), call `POST /v1/assess`, and render the verdict, score,
+  config version, confidence breakdown, and classified evidence. `adminApi.assess`
+  added; invalid-candidates JSON is caught client-side. **Completes the end-to-end
+  assessment initiative.** Verification: hermetic `./scripts/qa.sh` green (admin 28
+  tests; all suites); `pnpm build` (admin) succeeds.
 - **2026-06-21** — Assess pipeline AS1 (gateway orchestration) loop: new
   `POST /v1/assess` (write-scoped) orchestrates claim extract → evidence gather →
   score (+ persist) in one call and returns `{claim, evidence, result}`. Gateway only

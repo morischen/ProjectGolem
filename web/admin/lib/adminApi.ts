@@ -60,6 +60,21 @@ export interface AuditEntry {
   after: Record<string, unknown> | null;
 }
 
+/** Result of an end-to-end assessment (gateway POST /v1/assess). */
+export interface AssessResult {
+  claim: { id?: string; text: string; claim_type?: string } & Record<
+    string,
+    unknown
+  >;
+  evidence: Record<string, unknown>[];
+  result: {
+    verdict: string;
+    score: number;
+    breakdown?: Record<string, number>;
+    weights_version?: string;
+  } & Record<string, unknown>;
+}
+
 /** Public metadata for a managed API key (never the secret). */
 export interface KeyMeta {
   id: string;
@@ -218,6 +233,31 @@ export function getMetrics(apiKey: string): Promise<MetricsView> {
 /** Managed API keys (metadata only), via GET /admin/keys. */
 export function listKeys(apiKey: string): Promise<KeyMeta[]> {
   return get<KeyMeta[]>("/admin/keys", apiKey);
+}
+
+/**
+ * Run the full assessment pipeline (extract → gather → score) via POST /v1/assess.
+ * Requires a `write`-scoped key. Returns the claim, classified evidence, and verdict.
+ */
+export async function assess(
+  apiKey: string,
+  body: {
+    text: string;
+    claim_id: string;
+    candidates?: unknown[];
+    historical?: boolean;
+  },
+): Promise<AssessResult> {
+  const res = await fetch(`${GATEWAY_URL}/v1/assess`, {
+    method: "POST",
+    headers: { "content-type": "application/json", "x-api-key": apiKey },
+    body: JSON.stringify(body),
+  });
+  const json = await res.json();
+  if (!res.ok) {
+    throw new AdminApiError(`assess failed (${res.status})`, res.status, json);
+  }
+  return json as AssessResult;
 }
 
 /**
