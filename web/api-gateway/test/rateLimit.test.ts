@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { buildApp } from "../src/app";
-import { createRateLimiter } from "../src/rateLimit";
+import { createRateLimiter, InMemoryRateLimitStore } from "../src/rateLimit";
 
 afterEach(() => vi.restoreAllMocks());
 
@@ -22,6 +22,26 @@ describe("createRateLimiter", () => {
     expect(check("a").allowed).toBe(true);
     expect(check("b").allowed).toBe(true);
     expect(check("a").allowed).toBe(false);
+  });
+
+  it("a shared store enforces the limit across limiter instances (distributed)", () => {
+    // Two limiters = two gateway replicas sharing one counter backend.
+    const store = new InMemoryRateLimitStore();
+    const a = createRateLimiter({
+      limit: 2,
+      windowMs: 1000,
+      now: () => 0,
+      store,
+    });
+    const b = createRateLimiter({
+      limit: 2,
+      windowMs: 1000,
+      now: () => 0,
+      store,
+    });
+    expect(a("k").allowed).toBe(true); // replica A, hit 1
+    expect(b("k").allowed).toBe(true); // replica B, hit 2 (shared)
+    expect(a("k").allowed).toBe(false); // hit 3 -> blocked across both
   });
 });
 

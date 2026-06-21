@@ -4,6 +4,9 @@ export interface RateLimitOptions {
   limit: number;
   windowMs: number;
   now?: () => number; // injectable clock for deterministic tests
+  /** Counter backend. Default: in-memory (per-instance). Inject a shared store
+   * (e.g. Redis) for distributed limiting across gateway replicas. */
+  store?: RateLimitStore;
 }
 
 export interface RateLimitResult {
@@ -12,30 +15,53 @@ export interface RateLimitResult {
   resetAt: number;
 }
 
-/** Fixed-window in-memory limiter. Returns a `check(key)` function. */
+/** Current fixed-window counter state for a key. */
+export interface WindowState {
+  count: number;
+  resetAt: number;
+}
+
+/**
+ * The counter backend behind the limiter. A single method: atomically register a
+ * hit for `key` in the current `windowMs` window and return the resulting count and
+ * window reset time. The in-memory default is per-instance; a distributed adapter
+ * (Redis `INCR` + `PEXPIRE`, or a sliding-window Lua script) implements this same
+ * contract to share counters across gateway replicas (blueprint §22). Keeping it
+ * one method means the limiter logic is backend-agnostic and fully unit-testable.
+ */
+export interface RateLimitStore {
+  hit(key: string, windowMs: number, now: number): WindowState;
+}
+
+/** Per-instance, in-process fixed-window counter store. */
+export class InMemoryRateLimitStore implements RateLimitStore {
+  private readonly hits = new Map<string, WindowState>();
+
+  hit(key: string, windowMs: number, now: number): WindowState {
+    const entry = this.hits.get(key);
+    if (!entry || now >= entry.resetAt) {
+      const state = { count: 1, resetAt: now + windowMs };
+      this.hits.set(key, state);
+      return state;
+    }
+    entry.count += 1;
+    return entry;
+  }
+}
+
+/** Fixed-window limiter over a pluggable store. Returns a `check(key)` function. */
 export function createRateLimiter({
   limit,
   windowMs,
   now = () => Date.now(),
+  store = new InMemoryRateLimitStore(),
 }: RateLimitOptions) {
-  const hits = new Map<string, { count: number; resetAt: number }>();
   return function check(key: string): RateLimitResult {
-    const t = now();
-    const entry = hits.get(key);
-    if (!entry || t >= entry.resetAt) {
-      const resetAt = t + windowMs;
-      hits.set(key, { count: 1, resetAt });
-      return { allowed: true, remaining: limit - 1, resetAt };
+    const { count, resetAt } = store.hit(key, windowMs, now());
+    if (count > limit) {
+      return { allowed: false, remaining: 0, resetAt };
     }
-    if (entry.count >= limit) {
-      return { allowed: false, remaining: 0, resetAt: entry.resetAt };
-    }
-    entry.count += 1;
-    return {
-      allowed: true,
-      remaining: limit - entry.count,
-      resetAt: entry.resetAt,
-    };
+    return { allowed: true, remaining: limit - count, resetAt };
   };
 }
 

@@ -327,6 +327,12 @@ Larger initiatives, not single mechanical loops — each needs its own scoping:
 
 ## Loop log (append-only, newest first)
 
+- **2026-06-21** — Rate-limit store seam loop (blueprint §22): refactored the gateway
+  limiter behind a `RateLimitStore` interface (one `hit()` method) with an
+  `InMemoryRateLimitStore` default; `createRateLimiter`/`rateLimitHook` accept an
+  injected store so a Redis adapter can share counters across replicas. Proven with a
+  shared-store-across-two-limiters test. Verification: `./scripts/qa.sh` green
+  (gateway 56). The live Redis adapter itself is deferred (needs infra).
 - **2026-06-21** — Benchmark seed expansion loop (§28 calibration): grew the gold
   seed set from 9 → 21 labeled cases (more verdicts/difficulties/tiers — tier-2/3/4
   sources, mid-quality Likely True/False, even/leaning Mixed, faint/zero-mass
