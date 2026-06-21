@@ -48,3 +48,15 @@ def test_extract_bad_llm_output_is_server_error():
     client = _client("not json", raise_server_exceptions=False)
     res = client.post("/v1/extract", json={"text": "x", "claim_id": "c2"})
     assert res.status_code == 500
+
+
+def test_extract_llm_error_returns_502():
+    from eip_llm import LLMError
+
+    class _RaisingLLM:
+        def complete(self, **kwargs):
+            raise LLMError("refused")
+
+    client = TestClient(create_app(_RaisingLLM()))
+    res = client.post("/v1/extract", json={"text": "x", "claim_id": "c3"})
+    assert res.status_code == 502

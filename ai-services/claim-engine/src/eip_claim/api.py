@@ -9,8 +9,8 @@ to `AnthropicLLMClient`. The endpoint extracts/classifies only — it never scor
 
 from __future__ import annotations
 
-from eip_llm import LLMClient, build_llm_from_env
-from fastapi import FastAPI
+from eip_llm import LLMClient, LLMError, build_llm_from_env
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
 from eip_claim._generated.claim import Claim
@@ -32,7 +32,10 @@ def create_app(llm: LLMClient | None = None) -> FastAPI:
 
     @app.post("/v1/extract", response_model=Claim)
     def extract(request: ExtractRequest) -> Claim:
-        return extract_claim(request.text, claim_id=request.claim_id, llm=engine_llm).claim
+        try:
+            return extract_claim(request.text, claim_id=request.claim_id, llm=engine_llm).claim
+        except LLMError as e:
+            raise HTTPException(status_code=502, detail=f"LLM provider error: {e}") from e
 
     return app
 

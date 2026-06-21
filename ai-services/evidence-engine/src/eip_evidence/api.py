@@ -10,8 +10,8 @@ The LLM client is injectable. The engine classifies relation only; it never scor
 
 from __future__ import annotations
 
-from eip_llm import LLMClient, build_llm_from_env
-from fastapi import FastAPI
+from eip_llm import LLMClient, LLMError, build_llm_from_env
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
 from eip_evidence._generated.evidence import Evidence
@@ -46,7 +46,10 @@ def create_app(llm: LLMClient | None = None, retriever: Retriever | None = None)
             active = configured
         else:
             return []
-        return gather(request.claim_text, retriever=active, llm=engine_llm).evidence
+        try:
+            return gather(request.claim_text, retriever=active, llm=engine_llm).evidence
+        except LLMError as e:
+            raise HTTPException(status_code=502, detail=f"LLM provider error: {e}") from e
 
     return app
 

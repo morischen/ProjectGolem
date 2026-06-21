@@ -7,6 +7,7 @@ import pytest
 from eip_llm import (
     JSON_OBJECT_RESPONSE_FORMAT,
     AnthropicLLMClient,
+    LLMError,
     OpenRouterLLMClient,
     RecordedCall,
     StubLLMClient,
@@ -30,16 +31,18 @@ def test_stub_records_and_sequences_outputs():
 class _FakeOpenAI:
     """Minimal OpenAI-compatible stand-in: records the call, returns canned text."""
 
-    def __init__(self, content: str) -> None:
+    def __init__(self, content: str | None, finish_reason: str = "stop") -> None:
         self.last_kwargs: dict | None = None
         completions = SimpleNamespace(create=self._create)
         self.chat = SimpleNamespace(completions=completions)
         self._content = content
+        self._finish_reason = finish_reason
 
     def _create(self, **kwargs):
         self.last_kwargs = kwargs
         message = SimpleNamespace(content=self._content)
-        return SimpleNamespace(choices=[SimpleNamespace(message=message)])
+        choice = SimpleNamespace(message=message, finish_reason=self._finish_reason)
+        return SimpleNamespace(choices=[choice])
 
 
 def test_openrouter_maps_to_chat_completions_and_records():
@@ -57,9 +60,16 @@ def test_openrouter_maps_to_chat_completions_and_records():
     assert roles == ["system", "user"]
 
 
-def test_openrouter_handles_null_content():
-    client = OpenRouterLLMClient("x/y", client=_FakeOpenAI(None))
-    assert client.complete(system="s", prompt="p", inputs={}).output == ""
+def test_openrouter_raises_on_empty_or_refused_completion():
+    client = OpenRouterLLMClient("x/y", client=_FakeOpenAI(None, finish_reason="content_filter"))
+    with pytest.raises(LLMError):
+        client.complete(system="s", prompt="p", inputs={})
+
+
+def test_openrouter_accepts_timeout_and_retry_config():
+    fake = _FakeOpenAI('{"ok": true}')
+    client = OpenRouterLLMClient("x/y", timeout=5.0, max_retries=0, client=fake)
+    assert client.complete(system="s", prompt="p", inputs={}).output == '{"ok": true}'
 
 
 def test_build_llm_from_env_prefers_openrouter(monkeypatch):

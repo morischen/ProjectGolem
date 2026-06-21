@@ -44,6 +44,18 @@ def test_gather_empty_candidates_returns_empty():
     assert res.json() == []
 
 
+def test_gather_llm_error_returns_502():
+    from eip_llm import LLMError
+
+    class _RaisingLLM:
+        def complete(self, **kwargs):
+            raise LLMError("refused")
+
+    client = TestClient(create_app(_RaisingLLM()))
+    res = client.post("/v1/gather", json={"claim_text": "c", "candidates": [CANDIDATE]})
+    assert res.status_code == 502
+
+
 def test_gather_requires_claim_text():
     client = _client(json.dumps({"relation": "supports"}))
     res = client.post("/v1/gather", json={"candidates": [CANDIDATE]})

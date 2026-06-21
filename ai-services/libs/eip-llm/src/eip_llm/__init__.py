@@ -28,6 +28,12 @@ DEFAULT_OPENROUTER_MODEL = "anthropic/claude-opus-4.8"  # override via OPENROUTE
 JSON_OBJECT_RESPONSE_FORMAT: dict[str, Any] = {"type": "json_object"}
 
 
+class LLMError(RuntimeError):
+    """Raised when an LLM call fails or returns unusable output (e.g. a refusal /
+    content filter, or an empty completion). Transport errors (429/5xx/timeouts)
+    are retried by the SDK first; this surfaces the terminal failure to callers."""
+
+
 @dataclass(frozen=True)
 class RecordedCall:
     model_id: str
@@ -138,11 +144,15 @@ class OpenRouterLLMClient:
         model_id: str = DEFAULT_OPENROUTER_MODEL,
         *,
         max_tokens: int = 1024,
+        timeout: float = 60.0,
+        max_retries: int = 2,
         client: Any | None = None,
         api_key: str | None = None,
     ) -> None:
         self._model_id = model_id
         self._max_tokens = max_tokens
+        self._timeout = timeout
+        self._max_retries = max_retries
         self._client = client
         self._api_key = api_key
 
@@ -157,10 +167,14 @@ class OpenRouterLLMClient:
                 headers["HTTP-Referer"] = site
             if app:
                 headers["X-Title"] = app
+            # The SDK retries 429/5xx/connection errors with backoff and applies the
+            # request timeout (then raises) — so transient failures are handled here.
             self._client = OpenAI(
                 base_url="https://openrouter.ai/api/v1",
                 api_key=self._api_key or os.environ["OPENROUTER_API_KEY"],
                 default_headers=headers or None,
+                timeout=self._timeout,
+                max_retries=self._max_retries,
             )
         return self._client
 
@@ -184,13 +198,20 @@ class OpenRouterLLMClient:
         if response_format is not None:
             kwargs["response_format"] = response_format
         response = client.chat.completions.create(**kwargs)
-        content = response.choices[0].message.content
+        choice = response.choices[0]
+        content = choice.message.content
+        if not content:
+            # Empty completion — refusal/content filter, or a truncated/blocked turn.
+            finish_reason = getattr(choice, "finish_reason", None)
+            raise LLMError(
+                f"empty completion from {self._model_id} (finish_reason={finish_reason})"
+            )
         return RecordedCall(
             model_id=self._model_id,
             system=system,
             prompt=prompt,
             inputs=dict(inputs),
-            output=str(content or ""),
+            output=str(content),
         )
 
 
@@ -254,6 +275,8 @@ def build_llm_from_env() -> LLMClient:
         return OpenRouterLLMClient(
             os.getenv("OPENROUTER_MODEL", DEFAULT_OPENROUTER_MODEL),
             max_tokens=int(os.getenv("OPENROUTER_MAX_TOKENS", "1024")),
+            timeout=float(os.getenv("OPENROUTER_TIMEOUT", "60")),
+            max_retries=int(os.getenv("OPENROUTER_MAX_RETRIES", "2")),
         )
     return AnthropicLLMClient()
 
@@ -261,6 +284,7 @@ def build_llm_from_env() -> LLMClient:
 __all__ = [
     "RecordedCall",
     "LLMClient",
+    "LLMError",
     "StubLLMClient",
     "OpenRouterLLMClient",
     "AnthropicLLMClient",

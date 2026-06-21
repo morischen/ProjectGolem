@@ -49,6 +49,15 @@ Decisions locked:
   resistance. **14/14 pytest tests pass** (determinism, weights-sum, formula
   fixtures, all six verdicts, Insufficient/Mixed as real outcomes, contradiction
   flips Verified→Mixed). Added root `.gitignore`.
+- **2026-06-21** — **#3 hardening: error handling + calibration harness**.
+  (a) `eip-llm`: `LLMError` for refusals/empty completions; configurable `timeout` +
+  `max_retries` on `OpenRouterLLMClient` (SDK retries 429/5xx/timeouts), wired via
+  `OPENROUTER_TIMEOUT`/`OPENROUTER_MAX_RETRIES`. Claim/evidence APIs map `LLMError`
+  → **502** (clean, not opaque 500). (b) Calibration harness in `e2e`
+  (`calibration.py`): runs the LLM over labeled claims (classify → score → compare),
+  reporting relation + verdict accuracy; hermetic test (stub) + guarded live test.
+  **Live-verified** against Opus 4.8 via OpenRouter. Gate green: eip-llm 12, claim 16
+  (+1 skip), evidence 30 (+1 skip), e2e 6 (+1 skip).
 - **2026-06-21** — **Structured outputs + guarded live tests** (Backlog #3): added a
   `response_format` passthrough (OpenAI-compatible JSON mode, `JSON_OBJECT_RESPONSE_FORMAT`)
   and a tolerant `extract_json` parser (handles fences/prose/embedded JSON) to
@@ -282,11 +291,12 @@ Larger initiatives, not single mechanical loops — each needs its own scoping:
 - ✅ **Persistence & bitemporal verdicts — DONE** (Q1 store + Q2 SQL adapter + Q3
   persist-in-pipeline + history API). Follow-ups: a fuller action audit log (beyond
   verdict history), and gateway passthrough of `claim_id` to `/v1/score`.
-- **Real LLM enablement** (via OpenRouter, ADR-0009) — ✅ client + env selector +
-  hermetic tests + **structured outputs** (JSON mode + tolerant parser) + **guarded
-  live integration tests** (live-verified against Opus 4.8 via OpenRouter). Remaining:
-  refusal/rate-limit/timeout handling, and **calibration** against the gold benchmark
-  (§28) with the real LLM (needs credits + a run).
+- ✅ **Real LLM enablement — DONE** (via OpenRouter, ADR-0009): client + env selector
+  + structured outputs (JSON mode + tolerant parser) + guarded live tests +
+  refusal/rate-limit/timeout handling (`LLMError`, timeout/retries, 502 mapping) +
+  a calibration harness (relation/verdict accuracy) — all live-verified against
+  Opus 4.8 via OpenRouter. Follow-up: a larger labeled source-level dataset to run
+  full §28 calibration (ECE/bias gates) at scale.
 - ✅ **AuthN/Z + rate limiting — DONE (first cut)**: API-key auth (scopes/RBAC) +
   in-memory rate limiting at the gateway. Follow-up: OIDC/MFA + a shared/distributed
   rate-limit store (blueprint §22).
@@ -299,6 +309,9 @@ Larger initiatives, not single mechanical loops — each needs its own scoping:
 
 ## Loop log (append-only, newest first)
 
+- **2026-06-21** — #3 hardening loop: LLMError + timeout/retries (eip-llm) + 502
+  mapping (claim/evidence APIs) + calibration harness (e2e). Verification: hermetic
+  `./scripts/qa.sh` green; live calibration + engine live tests PASS with the key.
 - **2026-06-21** — Structured-outputs + live-tests loop: response_format JSON mode +
   extract_json in eip-llm; engines use them; guarded live tests (skip without key).
   Verification: hermetic `./scripts/qa.sh` green (live skipped); live tests PASS with
