@@ -258,9 +258,12 @@ Decisions locked:
     per-profile, append-only) and `AuditStore` (append-only action log), each with
     in-memory + SQL adapters and `ConfigRecord`/`AuditRecord` models. Schema-agnostic
     payloads keep the lib dependency-light (ScoringWeights shape stays in trust-engine).
-  - ⏭️ **A2.2 (next):** Trust Engine `GET/POST /v1/config` (new version on edit,
-    audited, sum-to-1 enforced); scoring reads the active config version.
-  - ⏭️ **A2.3:** gateway `admin`-scoped `GET/POST /admin/config`.
+  - ✅ **A2.2 (Trust Engine, done):** `config_service` bridges `ScoringWeights` ↔
+    the schema-agnostic `ConfigStore` (seeds default+historical, resolves active);
+    `GET /v1/config`, `GET /v1/config/{profile}/history`, `POST /v1/config` (new
+    version on edit, sum-to-1 enforced → 422, audited), `GET /v1/audit`; the score
+    path now reads the **active** config version (records its label on verdicts).
+  - ⏭️ **A2.3 (next):** gateway `admin`-scoped `GET/POST /admin/config` (+ audit).
   - ⏭️ **A2.4:** admin **Config** page (view + guarded edit + version/diff/history).
 
 ---
@@ -321,6 +324,14 @@ Larger initiatives, not single mechanical loops — each needs its own scoping:
 
 ## Loop log (append-only, newest first)
 
+- **2026-06-21** — Admin portal A2.2 (Trust Engine config) loop: new
+  `config_service` (ScoringWeights ↔ ConfigStore: seed, serialize, resolve active,
+  version labels) + endpoints `GET /v1/config`, `GET /v1/config/{profile}/history`,
+  `POST /v1/config` (creates a new version; sum-to-1/range violations → 422; writes
+  an audit entry with before/after), `GET /v1/audit`. The `/v1/score` path now reads
+  the active config version and records its label as `weights_version`. Config/audit
+  default to in-memory so the surface works without Postgres. Verification: hermetic
+  `make qa` green (63 tests; mypy clean; benchmark OK).
 - **2026-06-21** — Admin portal A2.1 (data layer) loop: added `ConfigStore`
   (versioned, per-profile, append-only) + `AuditStore` (append-only action log) to
   `eip-persistence`, each with in-memory + SQL adapters; new `ConfigRecord`/
