@@ -259,10 +259,12 @@ Decisions locked:
     (queue of items — `low_confidence`/`evidence_conflict`/`appeal`; `open`→`resolved`)
     + `ReviewRecord` model, in-memory + SQL adapters. Operational state (mutable
     status), distinct from the append-only verdict/config/audit stores.
-  - ⏭️ **A3.2 (next):** Trust Engine review endpoints (list/get/resolve); resolve
-    with an override appends a **new reviewer-attributed verdict version** (+ audit);
-    appeals submit/list; auto-enqueue low-confidence/conflict at score time.
-  - ⏭️ **A3.3:** gateway `admin`-scoped review/appeals routes + a **public**
+  - ✅ **A3.2 (Trust Engine, done):** `/v1/review` (list/get/resolve), `/v1/appeals`
+    (submit/list). Scoring auto-enqueues `evidence_conflict` (Mixed) and
+    `low_confidence` (<0.70) verdicts, one open item per claim. Resolve with an
+    **override** appends a new `human-override` verdict version attributed to the
+    reviewer (INV-OVERRIDE/INV-TEMPORAL) + an audit entry; appeals are logged too.
+  - ⏭️ **A3.3 (next):** gateway `admin`-scoped review/appeals routes + a **public**
     appeal-submit route.
   - ⏭️ **A3.4:** admin Review queue + override action + Appeals page; wire the public
     portal's `AppealEntry` to the submit route.
@@ -325,6 +327,14 @@ Larger initiatives, not single mechanical loops — each needs its own scoping:
 
 ## Loop log (append-only, newest first)
 
+- **2026-06-21** — Admin portal A3.2 (Trust Engine review/appeals) loop: wired
+  `ReviewStore` into the API. `/v1/score` now auto-enqueues escalations
+  (evidence_conflict for Mixed, low_confidence for <0.70), deduped to one open item
+  per claim. New endpoints: `GET /v1/review` (status filter), `GET /v1/review/{id}`,
+  `POST /v1/review/{id}/resolve` (upheld/dismissed/override — override appends a new
+  `human-override` verdict version attributed to the reviewer + audit, realizing
+  INV-OVERRIDE), `POST /v1/appeals` + `GET /v1/appeals` (appeals logged in audit).
+  Verification: hermetic `make qa` green (73 tests; mypy clean; benchmark OK).
 - **2026-06-21** — Admin portal A3.1 (data layer) loop: added `ReviewStore`
   (human-review queue: items of kind low_confidence/evidence_conflict/appeal,
   open→resolved) + `ReviewRecord` model to `eip-persistence`, with in-memory + SQL

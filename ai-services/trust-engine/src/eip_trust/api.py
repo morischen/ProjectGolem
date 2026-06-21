@@ -24,6 +24,9 @@ from eip_persistence import (
     ConfigStore,
     InMemoryAuditStore,
     InMemoryConfigStore,
+    InMemoryReviewStore,
+    ReviewRecord,
+    ReviewStore,
     VerdictRecord,
     VerdictStore,
     make_postgres_store,
@@ -40,9 +43,25 @@ from eip_trust.config_service import (
     weights_to_payload,
 )
 from eip_trust.engine import score_claim
-from eip_trust.models import Evidence, ScoringWeights, TrustResult
+from eip_trust.models import Evidence, ScoringWeights, TrustResult, Verdict
 
 _PROFILES = (DEFAULT_PROFILE, HISTORICAL_PROFILE)
+
+# A verdict whose confidence is below this is queued for human review (FR-007).
+LOW_CONFIDENCE_THRESHOLD = 0.70
+
+_VALID_VERDICTS = {v.value for v in Verdict}
+_DECISIONS = {"upheld", "override", "dismissed"}
+_APPEAL_TYPES = {"new_evidence", "source_challenge", "methodology"}
+
+
+def _needs_review(result: TrustResult) -> str | None:
+    """Classify whether a fresh verdict should be escalated, and why (FR-007)."""
+    if result.verdict is Verdict.MIXED_EVIDENCE:
+        return "evidence_conflict"
+    if result.score < LOW_CONFIDENCE_THRESHOLD:
+        return "low_confidence"
+    return None
 
 
 class ScoreRequest(BaseModel):
@@ -93,6 +112,31 @@ class ConfigView(BaseModel):
     profiles: list[ProfileConfig]
 
 
+class ReviewResolveRequest(BaseModel):
+    """A reviewer's decision on a queued item (INV-OVERRIDE). An 'override' appends a
+    new, reviewer-attributed verdict version — never mutating a prior one."""
+
+    reviewer: str = Field(min_length=1, description="Who is resolving the item (audited).")
+    decision: str = Field(description="'upheld' | 'override' | 'dismissed'.")
+    note: str | None = Field(default=None, description="Reviewer rationale (audited).")
+    override_verdict: str | None = Field(
+        default=None, description="Required when decision='override'; one of the six verdicts."
+    )
+    override_score: float | None = Field(
+        default=None, ge=0.0, le=1.0, description="Optional confidence to record with an override."
+    )
+    event_time: datetime | None = Field(default=None)
+
+
+class AppealRequest(BaseModel):
+    """A public challenge to a verdict (logged publicly). Lands in the review queue."""
+
+    claim_id: str = Field(min_length=1)
+    appeal_type: str = Field(description="'new_evidence' | 'source_challenge' | 'methodology'.")
+    body: str = Field(min_length=1, description="The substance of the appeal.")
+    submitter: str | None = Field(default=None, description="Optional submitter identity.")
+
+
 def _build_store_from_env() -> VerdictStore | None:
     dsn = os.getenv("POSTGRES_DSN")
     return make_postgres_store(dsn) if dsn else None
@@ -103,12 +147,17 @@ def create_app(
     *,
     config_store: ConfigStore | None = None,
     audit_store: AuditStore | None = None,
+    review_store: ReviewStore | None = None,
 ) -> FastAPI:
     verdict_store: VerdictStore | None = store if store is not None else _build_store_from_env()
-    # Config/audit default to in-memory so the admin surface works without Postgres.
+    # Config/audit/review default to in-memory so the admin surface works w/o Postgres.
     cfg_store: ConfigStore = config_store if config_store is not None else InMemoryConfigStore()
     aud_store: AuditStore = audit_store if audit_store is not None else InMemoryAuditStore()
+    rev_store: ReviewStore = review_store if review_store is not None else InMemoryReviewStore()
     seed_config_store(cfg_store, datetime.now(UTC))
+
+    def _has_open_item(claim_id: str) -> bool:
+        return any(item.claim_id == claim_id for item in rev_store.list(status="open"))
 
     app = FastAPI(title="EIP Trust Engine", version="0.0.1")
 
@@ -125,15 +174,30 @@ def create_app(
             independence=request.independence,
         )
         if verdict_store is not None and request.claim_id:
+            now = datetime.now(UTC)
             verdict_store.append(
                 request.claim_id,
                 verdict=result.verdict.value,
                 score=result.score,
                 weights_version=result.weights_version,
-                knowledge_time=datetime.now(UTC),
+                knowledge_time=now,
                 event_time=request.event_time,
                 payload=result.model_dump(mode="json"),
             )
+            # Escalate low-confidence / conflicted verdicts (FR-007), one open item
+            # per claim at a time so re-scoring doesn't flood the queue.
+            kind = _needs_review(result)
+            if kind is not None and not _has_open_item(request.claim_id):
+                rev_store.open_item(
+                    request.claim_id,
+                    kind=kind,
+                    created_time=now,
+                    detail={
+                        "verdict": result.verdict.value,
+                        "score": result.score,
+                        "conflict_ratio": result.conflict_ratio,
+                    },
+                )
         return result
 
     @app.get("/v1/config", response_model=ConfigView)
@@ -216,6 +280,117 @@ def create_app(
         if record is None:
             raise HTTPException(status_code=404, detail="no verdict for claim")
         return record
+
+    # --- Human review queue & appeals (A3) ---
+
+    @app.get("/v1/review", response_model=list[ReviewRecord])
+    def list_review(
+        status: str | None = None, limit: int = 100, offset: int = 0
+    ) -> list[ReviewRecord]:
+        return rev_store.list(status=status, limit=limit, offset=offset)
+
+    @app.get("/v1/review/{item_id}", response_model=ReviewRecord)
+    def get_review(item_id: int) -> ReviewRecord:
+        item = rev_store.get(item_id)
+        if item is None:
+            raise HTTPException(status_code=404, detail="no such review item")
+        return item
+
+    @app.post("/v1/review/{item_id}/resolve", response_model=ReviewRecord)
+    def resolve_review(item_id: int, request: ReviewResolveRequest) -> ReviewRecord:
+        item = rev_store.get(item_id)
+        if item is None:
+            raise HTTPException(status_code=404, detail="no such review item")
+        if item.status != "open":
+            raise HTTPException(status_code=409, detail="review item already resolved")
+        if request.decision not in _DECISIONS:
+            raise HTTPException(status_code=422, detail=f"decision must be one of {_DECISIONS}")
+
+        resolution: dict[str, object] = {"reviewer": request.reviewer, "decision": request.decision}
+        if request.note is not None:
+            resolution["note"] = request.note
+
+        if request.decision == "override":
+            if request.override_verdict not in _VALID_VERDICTS:
+                raise HTTPException(
+                    status_code=422, detail="override requires a valid override_verdict"
+                )
+            if verdict_store is None:
+                raise HTTPException(
+                    status_code=409, detail="no verdict store configured for overrides"
+                )
+            now = datetime.now(UTC)
+            prior = verdict_store.latest(item.claim_id)
+            score_val = (
+                request.override_score
+                if request.override_score is not None
+                else (prior.score if prior is not None else 0.0)
+            )
+            # INV-OVERRIDE + INV-TEMPORAL: append a NEW, attributed version.
+            new_record = verdict_store.append(
+                item.claim_id,
+                verdict=request.override_verdict,
+                score=score_val,
+                weights_version="human-override",
+                knowledge_time=now,
+                event_time=request.event_time,
+                payload={
+                    "source": "human_override",
+                    "reviewer": request.reviewer,
+                    "note": request.note,
+                    "review_item": item_id,
+                    "override_verdict": request.override_verdict,
+                },
+            )
+            resolution["override_verdict"] = request.override_verdict
+            resolution["override_score"] = score_val
+            resolution["verdict_version"] = new_record.version
+
+        now = datetime.now(UTC)
+        resolved = rev_store.resolve(item_id, resolution=resolution, resolved_time=now)
+        assert resolved is not None  # we hold the open item above
+        aud_store.record(
+            actor=request.reviewer,
+            action="review.resolve",
+            target=f"review:{item_id}",
+            knowledge_time=now,
+            before=item.model_dump(mode="json"),
+            after=resolved.model_dump(mode="json"),
+        )
+        return resolved
+
+    @app.post("/v1/appeals", response_model=ReviewRecord)
+    def submit_appeal(request: AppealRequest) -> ReviewRecord:
+        if request.appeal_type not in _APPEAL_TYPES:
+            raise HTTPException(
+                status_code=422, detail=f"appeal_type must be one of {_APPEAL_TYPES}"
+            )
+        now = datetime.now(UTC)
+        item = rev_store.open_item(
+            request.claim_id,
+            kind="appeal",
+            created_time=now,
+            detail={
+                "appeal_type": request.appeal_type,
+                "body": request.body,
+                "submitter": request.submitter,
+            },
+        )
+        # Appeals are logged publicly (blueprint appeals process).
+        aud_store.record(
+            actor=request.submitter or "public",
+            action="appeal.submit",
+            target=f"claim:{request.claim_id}",
+            knowledge_time=now,
+            after=item.model_dump(mode="json"),
+        )
+        return item
+
+    @app.get("/v1/appeals", response_model=list[ReviewRecord])
+    def list_appeals(limit: int = 100, offset: int = 0) -> list[ReviewRecord]:
+        # Appeals are review items of kind 'appeal'; filter the queue.
+        appeals = [r for r in rev_store.list(limit=10_000) if r.kind == "appeal"]
+        return appeals[offset : offset + limit]
 
     return app
 
