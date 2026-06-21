@@ -47,6 +47,30 @@ export interface ConfigWriteResult {
   body: unknown;
 }
 
+/** A human-review queue item (eip_persistence.ReviewRecord). */
+export interface ReviewRecord {
+  id: number;
+  claim_id: string;
+  kind: string;
+  status: string;
+  created_time: string;
+  detail: Record<string, unknown>;
+  resolution: Record<string, unknown> | null;
+  resolved_time: string | null;
+}
+
+/** Result of a review/appeal write: the engine status (404/409/422) + body. */
+export interface WriteResult {
+  status: number;
+  body: unknown;
+}
+
+export interface ListReviewInput {
+  status?: string;
+  limit?: number;
+  offset?: number;
+}
+
 /**
  * Read-only client for the Trust Engine's admin/browse surface. The gateway
  * proxies these for the admin portal (A1) under the `admin` scope; it never
@@ -113,6 +137,52 @@ export class AdminClient {
     return this.get<Record<string, unknown>[]>(
       `/v1/audit${qs ? `?${qs}` : ""}`,
     );
+  }
+
+  async listReview(input: ListReviewInput = {}): Promise<ReviewRecord[]> {
+    const params = new URLSearchParams();
+    if (input.status !== undefined) params.set("status", input.status);
+    if (input.limit !== undefined) params.set("limit", String(input.limit));
+    if (input.offset !== undefined) params.set("offset", String(input.offset));
+    const qs = params.toString();
+    return this.get<ReviewRecord[]>(`/v1/review${qs ? `?${qs}` : ""}`);
+  }
+
+  async getReview(itemId: number): Promise<ReviewRecord | null> {
+    const res = await fetch(`${this.baseUrl}/v1/review/${itemId}`);
+    if (res.status === 404) return null;
+    if (!res.ok) throw new Error(`trust-engine responded ${res.status}`);
+    return (await res.json()) as ReviewRecord;
+  }
+
+  /** Resolve a review item. Preserves the engine status (404/409/422) for the caller. */
+  async resolveReview(itemId: number, body: unknown): Promise<WriteResult> {
+    const res = await fetch(`${this.baseUrl}/v1/review/${itemId}/resolve`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    return { status: res.status, body: await res.json() };
+  }
+
+  async listAppeals(
+    input: { limit?: number; offset?: number } = {},
+  ): Promise<ReviewRecord[]> {
+    const params = new URLSearchParams();
+    if (input.limit !== undefined) params.set("limit", String(input.limit));
+    if (input.offset !== undefined) params.set("offset", String(input.offset));
+    const qs = params.toString();
+    return this.get<ReviewRecord[]>(`/v1/appeals${qs ? `?${qs}` : ""}`);
+  }
+
+  /** Submit a public appeal. Preserves the engine status (e.g. 422 invalid type). */
+  async submitAppeal(body: unknown): Promise<WriteResult> {
+    const res = await fetch(`${this.baseUrl}/v1/appeals`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    return { status: res.status, body: await res.json() };
   }
 
   private async get<T>(path: string): Promise<T> {

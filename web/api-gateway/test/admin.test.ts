@@ -30,6 +30,17 @@ const CONFIG_VIEW = {
   ],
 };
 
+const REVIEW_ITEM = {
+  id: 1,
+  claim_id: "c1",
+  kind: "evidence_conflict",
+  status: "open",
+  created_time: "2024-01-01T00:00:00Z",
+  detail: { score: 0.5 },
+  resolution: null,
+  resolved_time: null,
+};
+
 // A fake AdminClient so the routes are exercised without a live Trust Engine.
 function fakeAdmin(overrides: Partial<AdminClient> = {}): AdminClient {
   return {
@@ -46,6 +57,17 @@ function fakeAdmin(overrides: Partial<AdminClient> = {}): AdminClient {
       body: CONFIG_VIEW.profiles[0].active,
     }),
     listAudit: async () => [{ id: 1, action: "config.update" }],
+    listReview: async () => [REVIEW_ITEM],
+    getReview: async () => REVIEW_ITEM,
+    resolveReview: async () => ({
+      status: 200,
+      body: { ...REVIEW_ITEM, status: "resolved" },
+    }),
+    listAppeals: async () => [{ ...REVIEW_ITEM, kind: "appeal" }],
+    submitAppeal: async () => ({
+      status: 200,
+      body: { ...REVIEW_ITEM, kind: "appeal" },
+    }),
     ...overrides,
   } as unknown as AdminClient;
 }
@@ -194,6 +216,105 @@ describe("gateway admin browse routes", () => {
     });
     expect(res.statusCode).toBe(200);
     expect(res.json()).toEqual([{ id: 1, action: "config.update" }]);
+    await app.close();
+  });
+
+  it("403 on review routes without the admin scope", async () => {
+    const app = buildApp({ apiKeys: keys, admin: fakeAdmin() });
+    const res = await app.inject({
+      method: "GET",
+      url: "/admin/review",
+      headers: { "x-api-key": "writer" },
+    });
+    expect(res.statusCode).toBe(403);
+    await app.close();
+  });
+
+  it("200 lists the review queue with an admin key", async () => {
+    const app = buildApp({ apiKeys: keys, admin: fakeAdmin() });
+    const res = await app.inject({
+      method: "GET",
+      url: "/admin/review?status=open",
+      headers: { "x-api-key": "admin-key" },
+    });
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual([REVIEW_ITEM]);
+    await app.close();
+  });
+
+  it("404 when a review item is missing", async () => {
+    const app = buildApp({
+      apiKeys: keys,
+      admin: fakeAdmin({ getReview: async () => null }),
+    });
+    const res = await app.inject({
+      method: "GET",
+      url: "/admin/review/999",
+      headers: { "x-api-key": "admin-key" },
+    });
+    expect(res.statusCode).toBe(404);
+    await app.close();
+  });
+
+  it("resolve preserves the engine status (409 already resolved)", async () => {
+    const app = buildApp({
+      apiKeys: keys,
+      admin: fakeAdmin({
+        resolveReview: async () => ({
+          status: 409,
+          body: { detail: "already resolved" },
+        }),
+      }),
+    });
+    const res = await app.inject({
+      method: "POST",
+      url: "/admin/review/1/resolve",
+      headers: { "x-api-key": "admin-key" },
+      payload: { reviewer: "alice", decision: "dismissed" },
+    });
+    expect(res.statusCode).toBe(409);
+    await app.close();
+  });
+
+  it("200 lists appeals with an admin key", async () => {
+    const app = buildApp({ apiKeys: keys, admin: fakeAdmin() });
+    const res = await app.inject({
+      method: "GET",
+      url: "/admin/appeals",
+      headers: { "x-api-key": "admin-key" },
+    });
+    expect(res.statusCode).toBe(200);
+    expect(res.json()[0].kind).toBe("appeal");
+    await app.close();
+  });
+
+  it("public appeal submission needs no API key", async () => {
+    const app = buildApp({ apiKeys: keys, admin: fakeAdmin() });
+    const res = await app.inject({
+      method: "POST",
+      url: "/v1/appeals",
+      payload: { claim_id: "c1", appeal_type: "new_evidence", body: "x" },
+    });
+    expect(res.statusCode).toBe(200);
+    await app.close();
+  });
+
+  it("public appeal submission preserves a 422 invalid type", async () => {
+    const app = buildApp({
+      apiKeys: keys,
+      admin: fakeAdmin({
+        submitAppeal: async () => ({
+          status: 422,
+          body: { detail: "bad type" },
+        }),
+      }),
+    });
+    const res = await app.inject({
+      method: "POST",
+      url: "/v1/appeals",
+      payload: { claim_id: "c1", appeal_type: "nope", body: "x" },
+    });
+    expect(res.statusCode).toBe(422);
     await app.close();
   });
 });

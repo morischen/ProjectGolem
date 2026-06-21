@@ -82,6 +82,10 @@ export function buildApp(opts: AppOptions = {}): FastifyInstance {
     return handlers;
   };
 
+  // Public routes still get rate-limited (abuse control) but require no API key.
+  const publicLimited = (): preHandlerHookHandler[] =>
+    rateLimitOpts ? [rateLimitHook(rateLimitOpts)] : [];
+
   const app = Fastify({ logger: false });
 
   app.get("/health", async () => ({ status: "ok" }));
@@ -277,6 +281,103 @@ export function buildApp(opts: AppOptions = {}): FastifyInstance {
           offset: q.offset !== undefined ? Number(q.offset) : undefined,
           target: q.target,
         });
+      } catch {
+        reply.code(502);
+        return { error: "trust-engine unavailable" };
+      }
+    },
+  );
+
+  // Human review queue & appeals (A3). Admin reviewers list/inspect/resolve; the
+  // gateway forwards only — the override→new-verdict-version logic lives in the
+  // Trust Engine (INV-OVERRIDE/INV-DETERMINISM).
+  app.get(
+    "/admin/review",
+    { preHandler: protect("admin") },
+    async (request, reply) => {
+      const q = (request.query ?? {}) as {
+        status?: string;
+        limit?: string;
+        offset?: string;
+      };
+      try {
+        return await admin.listReview({
+          status: q.status,
+          limit: q.limit !== undefined ? Number(q.limit) : undefined,
+          offset: q.offset !== undefined ? Number(q.offset) : undefined,
+        });
+      } catch {
+        reply.code(502);
+        return { error: "trust-engine unavailable" };
+      }
+    },
+  );
+
+  app.get(
+    "/admin/review/:id",
+    { preHandler: protect("admin") },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      try {
+        const item = await admin.getReview(Number(id));
+        if (item === null) {
+          reply.code(404);
+          return { error: "no such review item" };
+        }
+        return item;
+      } catch {
+        reply.code(502);
+        return { error: "trust-engine unavailable" };
+      }
+    },
+  );
+
+  app.post(
+    "/admin/review/:id/resolve",
+    { preHandler: protect("admin") },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      try {
+        const result = await admin.resolveReview(
+          Number(id),
+          request.body ?? {},
+        );
+        reply.code(result.status); // preserve 200 / 404 / 409 / 422
+        return result.body;
+      } catch {
+        reply.code(502);
+        return { error: "trust-engine unavailable" };
+      }
+    },
+  );
+
+  app.get(
+    "/admin/appeals",
+    { preHandler: protect("admin") },
+    async (request, reply) => {
+      const q = (request.query ?? {}) as { limit?: string; offset?: string };
+      try {
+        return await admin.listAppeals({
+          limit: q.limit !== undefined ? Number(q.limit) : undefined,
+          offset: q.offset !== undefined ? Number(q.offset) : undefined,
+        });
+      } catch {
+        reply.code(502);
+        return { error: "trust-engine unavailable" };
+      }
+    },
+  );
+
+  // Public appeal submission — no API key, but rate-limited. Anyone may challenge a
+  // verdict; the appeal lands in the review queue and is logged publicly.
+  app.post(
+    "/v1/appeals",
+    { preHandler: publicLimited() },
+    async (request, reply) => {
+      try {
+        const result = await admin.submitAppeal(request.body ?? {});
+        reply.code(result.status); // preserve 200 / 422
+        return result.body;
       } catch {
         reply.code(502);
         return { error: "trust-engine unavailable" };

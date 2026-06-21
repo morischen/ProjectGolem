@@ -264,10 +264,12 @@ Decisions locked:
     `low_confidence` (<0.70) verdicts, one open item per claim. Resolve with an
     **override** appends a new `human-override` verdict version attributed to the
     reviewer (INV-OVERRIDE/INV-TEMPORAL) + an audit entry; appeals are logged too.
-  - ⏭️ **A3.3 (next):** gateway `admin`-scoped review/appeals routes + a **public**
-    appeal-submit route.
-  - ⏭️ **A3.4:** admin Review queue + override action + Appeals page; wire the public
-    portal's `AppealEntry` to the submit route.
+  - ✅ **A3.3 (gateway, done):** `admin`-scoped `GET /admin/review`,
+    `GET /admin/review/:id`, `POST /admin/review/:id/resolve` (preserves 404/409/422),
+    `GET /admin/appeals`; **public** rate-limited `POST /v1/appeals`. `AdminClient`
+    extended; added a `publicLimited()` preHandler (rate-limit, no key).
+  - ⏭️ **A3.4 (next):** admin Review queue + override action + Appeals page; wire the
+    public portal's `AppealEntry` to the submit route.
 
 ---
 
@@ -327,6 +329,13 @@ Larger initiatives, not single mechanical loops — each needs its own scoping:
 
 ## Loop log (append-only, newest first)
 
+- **2026-06-21** — Admin portal A3.3 (gateway review/appeals) loop: extended
+  `AdminClient` (listReview/getReview/resolveReview/listAppeals/submitAppeal) and
+  added `admin`-scoped `GET /admin/review`, `GET /admin/review/:id`,
+  `POST /admin/review/:id/resolve` (forwards 404/409/422), `GET /admin/appeals`, plus
+  a **public** rate-limited `POST /v1/appeals` (new `publicLimited()` preHandler —
+  rate-limit without an API key). Verification: hermetic `./scripts/qa.sh` green
+  (gateway 38 tests; all suites).
 - **2026-06-21** — Admin portal A3.2 (Trust Engine review/appeals) loop: wired
   `ReviewStore` into the API. `/v1/score` now auto-enqueues escalations
   (evidence_conflict for Mixed, low_confidence for <0.70), deduped to one open item
