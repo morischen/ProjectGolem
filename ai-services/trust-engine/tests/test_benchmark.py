@@ -19,7 +19,7 @@ def items():
 
 
 def test_seed_loads(items):
-    assert len(items) == 9
+    assert len(items) == 21
     assert all(it.id and it.claim_text for it in items)
 
 

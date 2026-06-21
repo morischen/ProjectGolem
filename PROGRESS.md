@@ -327,6 +327,15 @@ Larger initiatives, not single mechanical loops — each needs its own scoping:
 
 ## Loop log (append-only, newest first)
 
+- **2026-06-21** — Benchmark seed expansion loop (§28 calibration): grew the gold
+  seed set from 9 → 21 labeled cases (more verdicts/difficulties/tiers — tier-2/3/4
+  sources, mid-quality Likely True/False, even/leaning Mixed, faint/zero-mass
+  Insufficient). Each verified golden (engine reproduces the label). Verification:
+  hermetic `make qa` green (trust-engine 80; verdict accuracy 100%; ECE 0.236).
+- **2026-06-21** — Calibration ledger gateway+UI loop: gateway `admin`-scoped
+  `GET /admin/calibration` + `POST /admin/calibration/run`; admin Dashboard lists
+  recorded runs with a "Record a run" button. Verification: `./scripts/qa.sh` green
+  (gateway 55, admin 30).
 - **2026-06-21** — Calibration ledger backend loop: `eip-persistence`
   `CalibrationStore` (append-only run history, in-memory + SQL) + `CalibrationRunRecord`;
   Trust Engine `POST /v1/calibration/runs` (re-runs the gold benchmark and records a

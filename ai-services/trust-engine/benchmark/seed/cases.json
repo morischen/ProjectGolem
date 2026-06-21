@@ -6,9 +6,30 @@
     "difficulty": "tractable",
     "expected_band": "high",
     "evidence": [
-      {"id": "e1", "source_id": "s1", "source_tier": 1, "relation": "supports", "quality": 1.0, "freshness": 1.0},
-      {"id": "e2", "source_id": "s2", "source_tier": 1, "relation": "supports", "quality": 1.0, "freshness": 1.0},
-      {"id": "e3", "source_id": "s3", "source_tier": 1, "relation": "supports", "quality": 1.0, "freshness": 1.0}
+      {
+        "id": "e1",
+        "source_id": "s1",
+        "source_tier": 1,
+        "relation": "supports",
+        "quality": 1.0,
+        "freshness": 1.0
+      },
+      {
+        "id": "e2",
+        "source_id": "s2",
+        "source_tier": 1,
+        "relation": "supports",
+        "quality": 1.0,
+        "freshness": 1.0
+      },
+      {
+        "id": "e3",
+        "source_id": "s3",
+        "source_tier": 1,
+        "relation": "supports",
+        "quality": 1.0,
+        "freshness": 1.0
+      }
     ]
   },
   {
@@ -18,9 +39,30 @@
     "difficulty": "tractable",
     "expected_band": "high",
     "evidence": [
-      {"id": "e1", "source_id": "s1", "source_tier": 1, "relation": "contradicts", "quality": 1.0, "freshness": 1.0},
-      {"id": "e2", "source_id": "s2", "source_tier": 1, "relation": "contradicts", "quality": 1.0, "freshness": 1.0},
-      {"id": "e3", "source_id": "s3", "source_tier": 1, "relation": "contradicts", "quality": 1.0, "freshness": 1.0}
+      {
+        "id": "e1",
+        "source_id": "s1",
+        "source_tier": 1,
+        "relation": "contradicts",
+        "quality": 1.0,
+        "freshness": 1.0
+      },
+      {
+        "id": "e2",
+        "source_id": "s2",
+        "source_tier": 1,
+        "relation": "contradicts",
+        "quality": 1.0,
+        "freshness": 1.0
+      },
+      {
+        "id": "e3",
+        "source_id": "s3",
+        "source_tier": 1,
+        "relation": "contradicts",
+        "quality": 1.0,
+        "freshness": 1.0
+      }
     ]
   },
   {
@@ -29,10 +71,38 @@
     "expected_verdict": "Mixed Evidence",
     "difficulty": "hard",
     "evidence": [
-      {"id": "e1", "source_id": "s1", "source_tier": 1, "relation": "supports", "quality": 1.0, "freshness": 1.0},
-      {"id": "e2", "source_id": "s2", "source_tier": 1, "relation": "supports", "quality": 1.0, "freshness": 1.0},
-      {"id": "e3", "source_id": "s3", "source_tier": 1, "relation": "contradicts", "quality": 1.0, "freshness": 1.0},
-      {"id": "e4", "source_id": "s4", "source_tier": 1, "relation": "contradicts", "quality": 1.0, "freshness": 1.0}
+      {
+        "id": "e1",
+        "source_id": "s1",
+        "source_tier": 1,
+        "relation": "supports",
+        "quality": 1.0,
+        "freshness": 1.0
+      },
+      {
+        "id": "e2",
+        "source_id": "s2",
+        "source_tier": 1,
+        "relation": "supports",
+        "quality": 1.0,
+        "freshness": 1.0
+      },
+      {
+        "id": "e3",
+        "source_id": "s3",
+        "source_tier": 1,
+        "relation": "contradicts",
+        "quality": 1.0,
+        "freshness": 1.0
+      },
+      {
+        "id": "e4",
+        "source_id": "s4",
+        "source_tier": 1,
+        "relation": "contradicts",
+        "quality": 1.0,
+        "freshness": 1.0
+      }
     ]
   },
   {
@@ -41,7 +111,14 @@
     "expected_verdict": "Insufficient Evidence",
     "difficulty": "undecidable",
     "evidence": [
-      {"id": "e1", "source_id": "s1", "source_tier": 4, "relation": "supports", "quality": 0.1, "freshness": 0.0}
+      {
+        "id": "e1",
+        "source_id": "s1",
+        "source_tier": 4,
+        "relation": "supports",
+        "quality": 0.1,
+        "freshness": 0.0
+      }
     ]
   },
   {
@@ -51,8 +128,22 @@
     "difficulty": "tractable",
     "expected_band": "medium",
     "evidence": [
-      {"id": "e1", "source_id": "s1", "source_tier": 3, "relation": "supports", "quality": 0.6, "freshness": 0.5},
-      {"id": "e2", "source_id": "s2", "source_tier": 3, "relation": "supports", "quality": 0.6, "freshness": 0.5}
+      {
+        "id": "e1",
+        "source_id": "s1",
+        "source_tier": 3,
+        "relation": "supports",
+        "quality": 0.6,
+        "freshness": 0.5
+      },
+      {
+        "id": "e2",
+        "source_id": "s2",
+        "source_tier": 3,
+        "relation": "supports",
+        "quality": 0.6,
+        "freshness": 0.5
+      }
     ]
   },
   {
@@ -62,8 +153,22 @@
     "difficulty": "tractable",
     "expected_band": "medium",
     "evidence": [
-      {"id": "e1", "source_id": "s1", "source_tier": 3, "relation": "contradicts", "quality": 0.6, "freshness": 0.5},
-      {"id": "e2", "source_id": "s2", "source_tier": 3, "relation": "contradicts", "quality": 0.6, "freshness": 0.5}
+      {
+        "id": "e1",
+        "source_id": "s1",
+        "source_tier": 3,
+        "relation": "contradicts",
+        "quality": 0.6,
+        "freshness": 0.5
+      },
+      {
+        "id": "e2",
+        "source_id": "s2",
+        "source_tier": 3,
+        "relation": "contradicts",
+        "quality": 0.6,
+        "freshness": 0.5
+      }
     ]
   },
   {
@@ -74,9 +179,30 @@
     "expected_band": "high",
     "framing_pair_id": "fp1",
     "evidence": [
-      {"id": "e1", "source_id": "s1", "source_tier": 1, "relation": "supports", "quality": 1.0, "freshness": 1.0},
-      {"id": "e2", "source_id": "s2", "source_tier": 1, "relation": "supports", "quality": 1.0, "freshness": 1.0},
-      {"id": "e3", "source_id": "s3", "source_tier": 1, "relation": "supports", "quality": 1.0, "freshness": 1.0}
+      {
+        "id": "e1",
+        "source_id": "s1",
+        "source_tier": 1,
+        "relation": "supports",
+        "quality": 1.0,
+        "freshness": 1.0
+      },
+      {
+        "id": "e2",
+        "source_id": "s2",
+        "source_tier": 1,
+        "relation": "supports",
+        "quality": 1.0,
+        "freshness": 1.0
+      },
+      {
+        "id": "e3",
+        "source_id": "s3",
+        "source_tier": 1,
+        "relation": "supports",
+        "quality": 1.0,
+        "freshness": 1.0
+      }
     ]
   },
   {
@@ -87,9 +213,30 @@
     "expected_band": "high",
     "framing_pair_id": "fp1",
     "evidence": [
-      {"id": "e1", "source_id": "s1", "source_tier": 1, "relation": "supports", "quality": 1.0, "freshness": 1.0},
-      {"id": "e2", "source_id": "s2", "source_tier": 1, "relation": "supports", "quality": 1.0, "freshness": 1.0},
-      {"id": "e3", "source_id": "s3", "source_tier": 1, "relation": "supports", "quality": 1.0, "freshness": 1.0}
+      {
+        "id": "e1",
+        "source_id": "s1",
+        "source_tier": 1,
+        "relation": "supports",
+        "quality": 1.0,
+        "freshness": 1.0
+      },
+      {
+        "id": "e2",
+        "source_id": "s2",
+        "source_tier": 1,
+        "relation": "supports",
+        "quality": 1.0,
+        "freshness": 1.0
+      },
+      {
+        "id": "e3",
+        "source_id": "s3",
+        "source_tier": 1,
+        "relation": "supports",
+        "quality": 1.0,
+        "freshness": 1.0
+      }
     ]
   },
   {
@@ -100,9 +247,462 @@
     "expected_band": "high",
     "historical": true,
     "evidence": [
-      {"id": "e1", "source_id": "s1", "source_tier": 1, "relation": "supports", "quality": 1.0, "freshness": 0.0},
-      {"id": "e2", "source_id": "s2", "source_tier": 1, "relation": "supports", "quality": 1.0, "freshness": 0.0},
-      {"id": "e3", "source_id": "s3", "source_tier": 1, "relation": "supports", "quality": 1.0, "freshness": 0.0}
+      {
+        "id": "e1",
+        "source_id": "s1",
+        "source_tier": 1,
+        "relation": "supports",
+        "quality": 1.0,
+        "freshness": 0.0
+      },
+      {
+        "id": "e2",
+        "source_id": "s2",
+        "source_tier": 1,
+        "relation": "supports",
+        "quality": 1.0,
+        "freshness": 0.0
+      },
+      {
+        "id": "e3",
+        "source_id": "s3",
+        "source_tier": 1,
+        "relation": "supports",
+        "quality": 1.0,
+        "freshness": 0.0
+      }
+    ]
+  },
+  {
+    "id": "verified-tier2-quad",
+    "claim_text": "Four independent tier-2 outlets corroborate the same event.",
+    "expected_verdict": "Verified",
+    "difficulty": "tractable",
+    "expected_band": "high",
+    "evidence": [
+      {
+        "id": "e0",
+        "source_id": "s0",
+        "source_tier": 2,
+        "relation": "supports",
+        "quality": 1.0,
+        "freshness": 1.0
+      },
+      {
+        "id": "e1",
+        "source_id": "s1",
+        "source_tier": 2,
+        "relation": "supports",
+        "quality": 1.0,
+        "freshness": 1.0
+      },
+      {
+        "id": "e2",
+        "source_id": "s2",
+        "source_tier": 2,
+        "relation": "supports",
+        "quality": 1.0,
+        "freshness": 1.0
+      },
+      {
+        "id": "e3",
+        "source_id": "s3",
+        "source_tier": 2,
+        "relation": "supports",
+        "quality": 1.0,
+        "freshness": 1.0
+      }
+    ]
+  },
+  {
+    "id": "verified-five-tier1",
+    "claim_text": "Five independent primary sources document the event.",
+    "expected_verdict": "Verified",
+    "difficulty": "tractable",
+    "expected_band": "high",
+    "evidence": [
+      {
+        "id": "e0",
+        "source_id": "s0",
+        "source_tier": 1,
+        "relation": "supports",
+        "quality": 1.0,
+        "freshness": 1.0
+      },
+      {
+        "id": "e1",
+        "source_id": "s1",
+        "source_tier": 1,
+        "relation": "supports",
+        "quality": 1.0,
+        "freshness": 1.0
+      },
+      {
+        "id": "e2",
+        "source_id": "s2",
+        "source_tier": 1,
+        "relation": "supports",
+        "quality": 1.0,
+        "freshness": 1.0
+      },
+      {
+        "id": "e3",
+        "source_id": "s3",
+        "source_tier": 1,
+        "relation": "supports",
+        "quality": 1.0,
+        "freshness": 1.0
+      },
+      {
+        "id": "e4",
+        "source_id": "s4",
+        "source_tier": 1,
+        "relation": "supports",
+        "quality": 1.0,
+        "freshness": 1.0
+      }
+    ]
+  },
+  {
+    "id": "likely-true-tier3",
+    "claim_text": "Three lower-tier sources support the claim with no rebuttal.",
+    "expected_verdict": "Likely True",
+    "difficulty": "tractable",
+    "expected_band": "medium",
+    "evidence": [
+      {
+        "id": "e0",
+        "source_id": "s0",
+        "source_tier": 3,
+        "relation": "supports",
+        "quality": 1.0,
+        "freshness": 1.0
+      },
+      {
+        "id": "e1",
+        "source_id": "s1",
+        "source_tier": 3,
+        "relation": "supports",
+        "quality": 1.0,
+        "freshness": 1.0
+      },
+      {
+        "id": "e2",
+        "source_id": "s2",
+        "source_tier": 3,
+        "relation": "supports",
+        "quality": 1.0,
+        "freshness": 1.0
+      }
+    ]
+  },
+  {
+    "id": "likely-true-mid-quality",
+    "claim_text": "Three primary sources support, but quality/freshness are middling.",
+    "expected_verdict": "Likely True",
+    "difficulty": "hard",
+    "expected_band": "medium",
+    "evidence": [
+      {
+        "id": "e0",
+        "source_id": "s0",
+        "source_tier": 1,
+        "relation": "supports",
+        "quality": 0.55,
+        "freshness": 0.6
+      },
+      {
+        "id": "e1",
+        "source_id": "s1",
+        "source_tier": 1,
+        "relation": "supports",
+        "quality": 0.55,
+        "freshness": 0.6
+      },
+      {
+        "id": "e2",
+        "source_id": "s2",
+        "source_tier": 1,
+        "relation": "supports",
+        "quality": 0.55,
+        "freshness": 0.6
+      }
+    ]
+  },
+  {
+    "id": "false-tier2-trio",
+    "claim_text": "Four tier-2 outlets refute the claim.",
+    "expected_verdict": "False",
+    "difficulty": "tractable",
+    "expected_band": "high",
+    "evidence": [
+      {
+        "id": "e0",
+        "source_id": "s0",
+        "source_tier": 2,
+        "relation": "contradicts",
+        "quality": 1.0,
+        "freshness": 1.0
+      },
+      {
+        "id": "e1",
+        "source_id": "s1",
+        "source_tier": 2,
+        "relation": "contradicts",
+        "quality": 1.0,
+        "freshness": 1.0
+      },
+      {
+        "id": "e2",
+        "source_id": "s2",
+        "source_tier": 2,
+        "relation": "contradicts",
+        "quality": 1.0,
+        "freshness": 1.0
+      },
+      {
+        "id": "e3",
+        "source_id": "s3",
+        "source_tier": 2,
+        "relation": "contradicts",
+        "quality": 1.0,
+        "freshness": 1.0
+      }
+    ]
+  },
+  {
+    "id": "false-five-strong",
+    "claim_text": "Five independent primary sources refute the claim.",
+    "expected_verdict": "False",
+    "difficulty": "tractable",
+    "expected_band": "high",
+    "evidence": [
+      {
+        "id": "e0",
+        "source_id": "s0",
+        "source_tier": 1,
+        "relation": "contradicts",
+        "quality": 1.0,
+        "freshness": 1.0
+      },
+      {
+        "id": "e1",
+        "source_id": "s1",
+        "source_tier": 1,
+        "relation": "contradicts",
+        "quality": 1.0,
+        "freshness": 1.0
+      },
+      {
+        "id": "e2",
+        "source_id": "s2",
+        "source_tier": 1,
+        "relation": "contradicts",
+        "quality": 1.0,
+        "freshness": 1.0
+      },
+      {
+        "id": "e3",
+        "source_id": "s3",
+        "source_tier": 1,
+        "relation": "contradicts",
+        "quality": 1.0,
+        "freshness": 1.0
+      },
+      {
+        "id": "e4",
+        "source_id": "s4",
+        "source_tier": 1,
+        "relation": "contradicts",
+        "quality": 1.0,
+        "freshness": 1.0
+      }
+    ]
+  },
+  {
+    "id": "likely-false-tier3",
+    "claim_text": "Three lower-tier sources contradict the claim.",
+    "expected_verdict": "Likely False",
+    "difficulty": "tractable",
+    "expected_band": "medium",
+    "evidence": [
+      {
+        "id": "e0",
+        "source_id": "s0",
+        "source_tier": 3,
+        "relation": "contradicts",
+        "quality": 1.0,
+        "freshness": 1.0
+      },
+      {
+        "id": "e1",
+        "source_id": "s1",
+        "source_tier": 3,
+        "relation": "contradicts",
+        "quality": 1.0,
+        "freshness": 1.0
+      },
+      {
+        "id": "e2",
+        "source_id": "s2",
+        "source_tier": 3,
+        "relation": "contradicts",
+        "quality": 1.0,
+        "freshness": 1.0
+      }
+    ]
+  },
+  {
+    "id": "likely-false-mid",
+    "claim_text": "Three primary sources contradict, middling quality.",
+    "expected_verdict": "Likely False",
+    "difficulty": "hard",
+    "expected_band": "medium",
+    "evidence": [
+      {
+        "id": "e0",
+        "source_id": "s0",
+        "source_tier": 1,
+        "relation": "contradicts",
+        "quality": 0.55,
+        "freshness": 0.6
+      },
+      {
+        "id": "e1",
+        "source_id": "s1",
+        "source_tier": 1,
+        "relation": "contradicts",
+        "quality": 0.55,
+        "freshness": 0.6
+      },
+      {
+        "id": "e2",
+        "source_id": "s2",
+        "source_tier": 1,
+        "relation": "contradicts",
+        "quality": 0.55,
+        "freshness": 0.6
+      }
+    ]
+  },
+  {
+    "id": "mixed-tier1-even",
+    "claim_text": "Two strong sources support, two strong sources refute.",
+    "expected_verdict": "Mixed Evidence",
+    "difficulty": "hard",
+    "evidence": [
+      {
+        "id": "e0",
+        "source_id": "s0",
+        "source_tier": 1,
+        "relation": "supports",
+        "quality": 1.0,
+        "freshness": 1.0
+      },
+      {
+        "id": "e1",
+        "source_id": "s1",
+        "source_tier": 1,
+        "relation": "supports",
+        "quality": 1.0,
+        "freshness": 1.0
+      },
+      {
+        "id": "e2",
+        "source_id": "s2",
+        "source_tier": 1,
+        "relation": "contradicts",
+        "quality": 1.0,
+        "freshness": 1.0
+      },
+      {
+        "id": "e3",
+        "source_id": "s3",
+        "source_tier": 1,
+        "relation": "contradicts",
+        "quality": 1.0,
+        "freshness": 1.0
+      }
+    ]
+  },
+  {
+    "id": "mixed-lean-support",
+    "claim_text": "Support outweighs rebuttal but substantial conflict remains.",
+    "expected_verdict": "Mixed Evidence",
+    "difficulty": "hard",
+    "evidence": [
+      {
+        "id": "e0",
+        "source_id": "s0",
+        "source_tier": 1,
+        "relation": "supports",
+        "quality": 1.0,
+        "freshness": 1.0
+      },
+      {
+        "id": "e1",
+        "source_id": "s1",
+        "source_tier": 1,
+        "relation": "supports",
+        "quality": 1.0,
+        "freshness": 1.0
+      },
+      {
+        "id": "e2",
+        "source_id": "s2",
+        "source_tier": 1,
+        "relation": "supports",
+        "quality": 1.0,
+        "freshness": 1.0
+      },
+      {
+        "id": "e3",
+        "source_id": "s3",
+        "source_tier": 1,
+        "relation": "contradicts",
+        "quality": 1.0,
+        "freshness": 1.0
+      },
+      {
+        "id": "e4",
+        "source_id": "s4",
+        "source_tier": 1,
+        "relation": "contradicts",
+        "quality": 1.0,
+        "freshness": 1.0
+      }
+    ]
+  },
+  {
+    "id": "insufficient-tier4-faint",
+    "claim_text": "A single low-tier source of poor quality barely touches the claim.",
+    "expected_verdict": "Insufficient Evidence",
+    "difficulty": "undecidable",
+    "evidence": [
+      {
+        "id": "e0",
+        "source_id": "s0",
+        "source_tier": 4,
+        "relation": "supports",
+        "quality": 0.2,
+        "freshness": 0.2
+      }
+    ]
+  },
+  {
+    "id": "insufficient-zero-mass",
+    "claim_text": "One source nominally cited but with no probative weight.",
+    "expected_verdict": "Insufficient Evidence",
+    "difficulty": "undecidable",
+    "evidence": [
+      {
+        "id": "e0",
+        "source_id": "s0",
+        "source_tier": 1,
+        "relation": "supports",
+        "quality": 0.0,
+        "freshness": 0.0
+      }
     ]
   }
 ]
