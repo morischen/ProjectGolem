@@ -34,6 +34,9 @@ export interface AppOptions {
 interface ScoreBody {
   evidence?: Evidence[];
   historical?: boolean;
+  claim_id?: string;
+  independence?: number | null;
+  event_time?: string | null;
 }
 
 interface ExtractBody {
@@ -98,6 +101,9 @@ export function buildApp(opts: AppOptions = {}): FastifyInstance {
         return await scorer.score({
           evidence: body.evidence,
           historical: body.historical,
+          claimId: body.claim_id,
+          independence: body.independence,
+          eventTime: body.event_time,
         });
       } catch {
         reply.code(502);

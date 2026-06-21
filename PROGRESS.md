@@ -49,6 +49,11 @@ Decisions locked:
   resistance. **14/14 pytest tests pass** (determinism, weights-sum, formula
   fixtures, all six verdicts, Insufficient/Mixed as real outcomes, contradiction
   flips Verified→Mixed). Added root `.gitignore`.
+- **2026-06-21** — **Gateway → Trust Engine field passthrough**: the gateway's
+  `/v1/score` now forwards `claim_id`, `independence`, and `event_time` to the Trust
+  Engine, so verdict persistence (ADR-0008) and the independence override (ADR-0007)
+  work through the gateway, not just the Python API directly. Test asserts the
+  forwarded request body. gateway 20.
 - **2026-06-20** — **Gateway auth + rate limiting** (Backlog #4): API-key auth with
   scopes/RBAC (`requireScope`; `EIP_API_KEYS` env, `x-api-key` header; 401/403) and an
   injectable-clock in-memory fixed-window rate limiter (`createRateLimiter`/
@@ -267,6 +272,8 @@ Larger initiatives, not single mechanical loops — each needs its own scoping:
 
 ## Loop log (append-only, newest first)
 
+- **2026-06-21** — Gateway field-passthrough loop: forward claim_id/independence/
+  event_time to /v1/score. Verification: `./scripts/qa.sh` → gateway 20, all green.
 - **2026-06-20** — Gateway auth + rate-limit loop: API-key scopes + fixed-window
   limiter on `/v1/*`. Verification: `./scripts/qa.sh` → gateway 19, all services green.
 - **2026-06-20** — Governance-docs loop: blueprint patch → v1.2 (§25 Budget revised,

@@ -3,6 +3,12 @@ import type { Evidence, TrustResult } from "@eip/contracts";
 export interface ScoreInput {
   evidence: Evidence[];
   historical?: boolean;
+  /** Persist the verdict under this claim id (Trust Engine store, ADR-0008). */
+  claimId?: string;
+  /** Graph-derived independence_ratio override (ADR-0007). */
+  independence?: number | null;
+  /** ISO-8601 time the underlying event occurred, if known. */
+  eventTime?: string | null;
 }
 
 /**
@@ -20,6 +26,11 @@ export class ScorerClient {
       body: JSON.stringify({
         evidence: input.evidence,
         historical: input.historical ?? false,
+        ...(input.claimId !== undefined ? { claim_id: input.claimId } : {}),
+        ...(input.independence != null
+          ? { independence: input.independence }
+          : {}),
+        ...(input.eventTime != null ? { event_time: input.eventTime } : {}),
       }),
     });
     if (!res.ok) {

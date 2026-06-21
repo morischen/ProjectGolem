@@ -61,6 +61,27 @@ describe("gateway POST /v1/score", () => {
     await app.close();
   });
 
+  it("forwards claim_id and independence to the trust-engine", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify(FAKE_RESULT), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      }),
+    );
+
+    const app = buildApp();
+    await app.inject({
+      method: "POST",
+      url: "/v1/score",
+      payload: { evidence: EVIDENCE, claim_id: "c1", independence: 0.33 },
+    });
+
+    const sentBody = JSON.parse(fetchSpy.mock.calls[0][1]?.body as string);
+    expect(sentBody.claim_id).toBe("c1");
+    expect(sentBody.independence).toBe(0.33);
+    await app.close();
+  });
+
   it("rejects a body without evidence[] (400)", async () => {
     const app = buildApp();
     const res = await app.inject({
