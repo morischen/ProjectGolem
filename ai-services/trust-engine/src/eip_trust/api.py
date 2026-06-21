@@ -48,6 +48,7 @@ from eip_trust.config_service import (
 from eip_trust.engine import score_claim
 from eip_trust.metrics import benchmark_metrics, compute_metrics
 from eip_trust.models import Evidence, ScoringWeights, TrustResult, Verdict
+from eip_trust.proposals import ConfigProposal, InMemoryProposalStore, ProposalError
 
 _PROFILES = (DEFAULT_PROFILE, HISTORICAL_PROFILE)
 
@@ -104,6 +105,10 @@ class ConfigUpdateRequest(BaseModel):
     strength_floor: float = Field(ge=0.0, le=1.0)
     mixed_conflict_threshold: float = Field(ge=0.0, le=0.5)
     verified_threshold: float = Field(ge=0.0, le=1.0)
+
+
+class ApprovalRequest(BaseModel):
+    approver: str = Field(min_length=1, description="Who is approving (must be distinct).")
 
 
 class ProfileConfig(BaseModel):
@@ -175,6 +180,27 @@ def _build_store_from_env() -> VerdictStore | None:
     return make_postgres_store(dsn) if dsn else None
 
 
+def _weights_from_request(label: str, request: ConfigUpdateRequest) -> ScoringWeights:
+    """Validate a config edit into ScoringWeights (sum-to-1 + ranges). Raises
+    HTTPException(422) on a caller error, with pydantic's non-serializable ctx stripped."""
+    try:
+        return ScoringWeights(
+            version=label,
+            source_reliability=request.source_reliability,
+            corroboration=request.corroboration,
+            evidence_quality=request.evidence_quality,
+            independence=request.independence,
+            freshness=request.freshness,
+            tier_reliability=request.tier_reliability,
+            strength_floor=request.strength_floor,
+            mixed_conflict_threshold=request.mixed_conflict_threshold,
+            verified_threshold=request.verified_threshold,
+        )
+    except ValidationError as exc:
+        detail = [{"loc": list(e["loc"]), "msg": e["msg"], "type": e["type"]} for e in exc.errors()]
+        raise HTTPException(status_code=422, detail=detail) from exc
+
+
 def create_app(
     store: VerdictStore | None = None,
     *,
@@ -192,10 +218,31 @@ def create_app(
     cal_store: CalibrationStore = (
         calibration_store if calibration_store is not None else InMemoryCalibrationStore()
     )
+    proposal_store = InMemoryProposalStore()
+    # Approvals required before a proposed config change applies (separation of duties).
+    required_approvals = max(1, int(os.getenv("CONFIG_REQUIRED_APPROVALS", "2")))
     seed_config_store(cfg_store, datetime.now(UTC))
 
     def _has_open_item(claim_id: str) -> bool:
         return any(item.claim_id == claim_id for item in rev_store.list(status="open"))
+
+    def _apply_config(
+        profile: str, payload: dict[str, object], actor: str, note: str | None
+    ) -> ConfigRecord:
+        """Write a new config version + audit entry. Shared by direct edits and
+        approved proposals."""
+        before = cfg_store.active(profile)
+        now = datetime.now(UTC)
+        record = cfg_store.put(profile, payload=payload, knowledge_time=now, actor=actor, note=note)
+        aud_store.record(
+            actor=actor,
+            action="config.update",
+            target=f"config:{profile}",
+            knowledge_time=now,
+            before=before.payload if before is not None else None,
+            after=record.payload,
+        )
+        return record
 
     app = FastAPI(title="EIP Trust Engine", version="0.0.1")
 
@@ -255,46 +302,54 @@ def create_app(
 
     @app.post("/v1/config", response_model=ConfigRecord)
     def update_config(request: ConfigUpdateRequest) -> ConfigRecord:
+        # Direct edit (single-actor). For change-controlled profiles, use proposals.
         label = next_version_label(cfg_store, request.profile)
-        try:
-            weights = ScoringWeights(
-                version=label,
-                source_reliability=request.source_reliability,
-                corroboration=request.corroboration,
-                evidence_quality=request.evidence_quality,
-                independence=request.independence,
-                freshness=request.freshness,
-                tier_reliability=request.tier_reliability,
-                strength_floor=request.strength_floor,
-                mixed_conflict_threshold=request.mixed_conflict_threshold,
-                verified_threshold=request.verified_threshold,
-            )
-        except ValidationError as exc:
-            # Sum-to-1 / range violations are caller errors, not server faults. Strip
-            # pydantic's non-JSON-serializable `ctx` before returning the detail.
-            detail = [
-                {"loc": list(e["loc"]), "msg": e["msg"], "type": e["type"]} for e in exc.errors()
-            ]
-            raise HTTPException(status_code=422, detail=detail) from exc
+        weights = _weights_from_request(label, request)
+        return _apply_config(
+            request.profile, weights_to_payload(weights), request.actor, request.note
+        )
 
-        before = cfg_store.active(request.profile)
-        now = datetime.now(UTC)
-        record = cfg_store.put(
-            request.profile,
+    @app.post("/v1/config/proposals", response_model=ConfigProposal)
+    def propose_config(request: ConfigUpdateRequest) -> ConfigProposal:
+        # Validate the weights now (fail fast) so a proposal is always applyable.
+        label = next_version_label(cfg_store, request.profile)
+        weights = _weights_from_request(label, request)
+        return proposal_store.create(
+            profile=request.profile,
             payload=weights_to_payload(weights),
-            knowledge_time=now,
-            actor=request.actor,
+            proposed_by=request.actor,
+            required_approvals=required_approvals,
+            created_time=datetime.now(UTC),
             note=request.note,
         )
-        aud_store.record(
-            actor=request.actor,
-            action="config.update",
-            target=f"config:{request.profile}",
-            knowledge_time=now,
-            before=before.payload if before is not None else None,
-            after=record.payload,
+
+    @app.get("/v1/config/proposals", response_model=list[ConfigProposal])
+    def list_proposals(status: str | None = None) -> list[ConfigProposal]:
+        return proposal_store.list(status=status)
+
+    @app.post("/v1/config/proposals/{proposal_id}/approve", response_model=ConfigProposal)
+    def approve_proposal(proposal_id: int, request: ApprovalRequest) -> ConfigProposal:
+        try:
+            updated = proposal_store.add_approval(proposal_id, request.approver)
+        except KeyError as exc:
+            raise HTTPException(status_code=404, detail="no such proposal") from exc
+        except ProposalError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+        if not updated.is_satisfied:
+            return updated
+
+        # Threshold met → apply as a new config version, re-stamping the traceable
+        # label for the now-current version, and record who approved.
+        label = next_version_label(cfg_store, updated.profile)
+        payload = {**updated.payload, "version": label}
+        record = _apply_config(
+            updated.profile,
+            payload,
+            actor=f"proposal:{proposal_id}",
+            note=f"approved by {', '.join(updated.approvals)} (proposed by {updated.proposed_by})",
         )
-        return record
+        return proposal_store.mark_applied(proposal_id, version=record.version)
 
     @app.get("/v1/audit", response_model=list[AuditRecord])
     def list_audit(

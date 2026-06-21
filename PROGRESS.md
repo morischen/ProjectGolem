@@ -327,6 +327,15 @@ Larger initiatives, not single mechanical loops — each needs its own scoping:
 
 ## Loop log (append-only, newest first)
 
+- **2026-06-21** — Multi-approver config change control loop (governance §20): added
+  `proposals.py` (ConfigProposal + InMemoryProposalStore with separation-of-duties
+  rules) and Trust Engine endpoints `POST /v1/config/proposals` (validates weights
+  up front), `GET /v1/config/proposals`, `POST /v1/config/proposals/{id}/approve`.
+  A change applies only after `CONFIG_REQUIRED_APPROVALS` (default 2) **distinct**
+  approvers — none the proposer — sign off; applying writes a new audited config
+  version. Direct `POST /v1/config` still works (single-actor) via a shared
+  `_apply_config` helper. Verification: hermetic `make qa` green (trust-engine 86).
+  Gateway/admin-UI exposure is a thin follow-up.
 - **2026-06-21** — Local embedder + graph seeding loop (ADR-0011/0010): added
   `HashingEmbedder` — a real (if simple) offline lexical embedder (hashed
   bag-of-words + TF, L2-normalized, Unicode-tokenized for AR/HE/EN) behind the
