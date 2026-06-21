@@ -5,10 +5,12 @@ import { Login } from "../components/Login";
 import { ClaimsBrowser } from "../components/ClaimsBrowser";
 import { ConfigEditor } from "../components/ConfigEditor";
 import { ReviewQueue } from "../components/ReviewQueue";
+import { Dashboard } from "../components/Dashboard";
 
-type Tab = "claims" | "config" | "review" | "appeals";
+type Tab = "dashboard" | "claims" | "config" | "review" | "appeals";
 
 const TABS: { id: Tab; label: string }[] = [
+  { id: "dashboard", label: "Dashboard" },
   { id: "claims", label: "Claims" },
   { id: "review", label: "Review" },
   { id: "appeals", label: "Appeals" },
@@ -17,7 +19,7 @@ const TABS: { id: Tab; label: string }[] = [
 
 export default function AdminPage() {
   const [apiKey, setApiKey] = useState<string | null>(null);
-  const [tab, setTab] = useState<Tab>("claims");
+  const [tab, setTab] = useState<Tab>("dashboard");
   const signOut = useCallback(() => setApiKey(null), []);
 
   if (apiKey === null) return <Login onSubmit={setApiKey} />;
@@ -39,6 +41,9 @@ export default function AdminPage() {
           Sign out
         </button>
       </nav>
+      {tab === "dashboard" && (
+        <Dashboard apiKey={apiKey} onAuthError={signOut} />
+      )}
       {tab === "claims" && (
         <ClaimsBrowser apiKey={apiKey} onAuthError={signOut} />
       )}

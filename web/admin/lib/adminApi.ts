@@ -60,6 +60,17 @@ export interface AuditEntry {
   after: Record<string, unknown> | null;
 }
 
+export interface MetricsView {
+  benchmark: {
+    total: number;
+    verdict_accuracy: number;
+    calibration_error: number;
+    by_difficulty: Record<string, number>;
+  } | null;
+  queue: { open: number; resolved: number; by_kind: Record<string, number> };
+  claims_count: number;
+}
+
 /** A human-review queue item (eip_persistence.ReviewRecord). */
 export interface ReviewRecord {
   id: number;
@@ -187,6 +198,11 @@ export async function updateConfig(
     );
   }
   return json as ConfigRecord;
+}
+
+/** Calibration / queue-health snapshot, via GET /admin/metrics. */
+export function getMetrics(apiKey: string): Promise<MetricsView> {
+  return get<MetricsView>("/admin/metrics", apiKey);
 }
 
 /** Review-queue items (newest first), via GET /admin/review. */

@@ -258,8 +258,9 @@ Decisions locked:
     /v1/metrics` (gold-benchmark verdict accuracy + calibration error + by-difficulty,
     review-queue health open/resolved/by-kind, claims count); gateway `admin`-scoped
     `GET /admin/metrics`. Pure read — re-runs the deterministic engine over the seed.
-  - ⏭️ **A4.2 (next):** admin **Dashboard** page (accuracy/calibration + queue health).
-  - ⏭️ **A4.3:** gateway `KeyStore` (managed, hashed, env-seeded) + auth consults it
+  - ✅ **A4.2 (dashboard, done):** admin **Dashboard** page (verdict accuracy,
+    calibration error, by-difficulty, review-queue health, claims count) — default tab.
+  - ⏭️ **A4.3 (next):** gateway `KeyStore` (managed, hashed, env-seeded) + auth consults it
     + `admin`-scoped `/admin/keys` CRUD; Trust Engine `POST /v1/audit` for logging.
   - ⏭️ **A4.4:** admin **Access-management** page (keys/roles CRUD).
 
@@ -321,6 +322,11 @@ Larger initiatives, not single mechanical loops — each needs its own scoping:
 
 ## Loop log (append-only, newest first)
 
+- **2026-06-21** — Admin portal A4.2 (dashboard) loop: admin app gains a `Dashboard`
+  component (now the default tab) showing gold-benchmark verdict accuracy +
+  calibration error + by-difficulty, review-queue health (open/resolved/by-kind), and
+  claims count, via `getMetrics` → `/admin/metrics`. Verification: hermetic
+  `./scripts/qa.sh` green (admin 22 tests; all suites); `pnpm build` (admin) succeeds.
 - **2026-06-21** — Admin portal A4.1 (metrics endpoint) loop: new Trust Engine
   `metrics` module + `GET /v1/metrics` — gold-benchmark verdict accuracy +
   calibration error + by-difficulty, review-queue health (open/resolved/by-kind),
