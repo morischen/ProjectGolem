@@ -60,6 +60,18 @@ export interface AuditEntry {
   after: Record<string, unknown> | null;
 }
 
+/** A human-review queue item (eip_persistence.ReviewRecord). */
+export interface ReviewRecord {
+  id: number;
+  claim_id: string;
+  kind: string;
+  status: string;
+  created_time: string;
+  detail: Record<string, unknown>;
+  resolution: Record<string, unknown> | null;
+  resolved_time: string | null;
+}
+
 /** Gateway base URL — client-side, so it must be NEXT_PUBLIC_*. */
 const GATEWAY_URL =
   process.env.NEXT_PUBLIC_GATEWAY_URL ?? "http://localhost:4000";
@@ -175,4 +187,56 @@ export async function updateConfig(
     );
   }
   return json as ConfigRecord;
+}
+
+/** Review-queue items (newest first), via GET /admin/review. */
+export function listReview(
+  apiKey: string,
+  opts: { status?: string; limit?: number } = {},
+): Promise<ReviewRecord[]> {
+  const params = new URLSearchParams();
+  if (opts.status !== undefined) params.set("status", opts.status);
+  if (opts.limit !== undefined) params.set("limit", String(opts.limit));
+  const qs = params.toString();
+  return get<ReviewRecord[]>(`/admin/review${qs ? `?${qs}` : ""}`, apiKey);
+}
+
+/** Appeals (review items of kind 'appeal'), via GET /admin/appeals. */
+export function listAppeals(apiKey: string): Promise<ReviewRecord[]> {
+  return get<ReviewRecord[]>("/admin/appeals", apiKey);
+}
+
+/** A reviewer's decision on a queued item. */
+export interface ResolveBody {
+  reviewer: string;
+  decision: "upheld" | "override" | "dismissed";
+  note?: string;
+  override_verdict?: string;
+  override_score?: number;
+}
+
+/**
+ * Resolve a review item. An 'override' appends a new, reviewer-attributed verdict
+ * version server-side (INV-OVERRIDE). Engine rejections (404/409/422) are surfaced
+ * as AdminApiError so the UI can explain them.
+ */
+export async function resolveReview(
+  apiKey: string,
+  itemId: number,
+  body: ResolveBody,
+): Promise<ReviewRecord> {
+  const res = await fetch(`${GATEWAY_URL}/admin/review/${itemId}/resolve`, {
+    method: "POST",
+    headers: { "content-type": "application/json", "x-api-key": apiKey },
+    body: JSON.stringify(body),
+  });
+  const json = await res.json();
+  if (!res.ok) {
+    throw new AdminApiError(
+      `resolve rejected (${res.status})`,
+      res.status,
+      (json as { detail?: unknown }).detail ?? json,
+    );
+  }
+  return json as ReviewRecord;
 }

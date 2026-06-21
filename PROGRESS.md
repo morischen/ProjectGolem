@@ -252,24 +252,11 @@ Decisions locked:
 
 ## 🔄 In progress
 
-- **Admin portal A3 — human review queue & appeals** (FR-007 escalation +
-  functional appeals; realizes INV-OVERRIDE). Plan:
+- _Nothing in flight._ Admin portal **A3 (human review queue & appeals) is
+  complete** (data layer → Trust Engine → gateway → admin Review/Appeals UI + live
+  public appeals). Next admin milestone is **A4** (calibration/bias dashboard &
+  access management) — see Backlog and
   [docs/admin-portal-plan.md](docs/admin-portal-plan.md).
-  - ✅ **A3.1 (data layer, done):** `eip-persistence` gains `ReviewStore`
-    (queue of items — `low_confidence`/`evidence_conflict`/`appeal`; `open`→`resolved`)
-    + `ReviewRecord` model, in-memory + SQL adapters. Operational state (mutable
-    status), distinct from the append-only verdict/config/audit stores.
-  - ✅ **A3.2 (Trust Engine, done):** `/v1/review` (list/get/resolve), `/v1/appeals`
-    (submit/list). Scoring auto-enqueues `evidence_conflict` (Mixed) and
-    `low_confidence` (<0.70) verdicts, one open item per claim. Resolve with an
-    **override** appends a new `human-override` verdict version attributed to the
-    reviewer (INV-OVERRIDE/INV-TEMPORAL) + an audit entry; appeals are logged too.
-  - ✅ **A3.3 (gateway, done):** `admin`-scoped `GET /admin/review`,
-    `GET /admin/review/:id`, `POST /admin/review/:id/resolve` (preserves 404/409/422),
-    `GET /admin/appeals`; **public** rate-limited `POST /v1/appeals`. `AdminClient`
-    extended; added a `publicLimited()` preHandler (rate-limit, no key).
-  - ⏭️ **A3.4 (next):** admin Review queue + override action + Appeals page; wire the
-    public portal's `AppealEntry` to the submit route.
 
 ---
 
@@ -329,6 +316,14 @@ Larger initiatives, not single mechanical loops — each needs its own scoping:
 
 ## Loop log (append-only, newest first)
 
+- **2026-06-21** — Admin portal A3.4 (review/appeals UI) loop: admin app gains a
+  `ReviewQueue` component (modes: review queue / appeals) with a resolve panel
+  (upheld/dismissed/**override** → verdict picker, reviewer + note) wired to
+  `/admin/review/:id/resolve`; new Review + Appeals tabs in `page.tsx`. Public portal
+  `AppealEntry` is now a real form (type + details) posting to the gateway's public
+  `/v1/appeals` via `lib/gateway.submitAppeal`, with success/error states.
+  Verification: hermetic `./scripts/qa.sh` green (admin 19, portal 11; all suites);
+  `pnpm build` (admin + portal) succeeds. **A3 done.**
 - **2026-06-21** — Admin portal A3.3 (gateway review/appeals) loop: extended
   `AdminClient` (listReview/getReview/resolveReview/listAppeals/submitAppeal) and
   added `admin`-scoped `GET /admin/review`, `GET /admin/review/:id`,

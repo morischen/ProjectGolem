@@ -88,9 +88,14 @@ changelog (blueprint §20). Future: multi-approver change-control.
 
 ---
 
-## A3 — Human review queue & appeals
+## A3 — Human review queue & appeals  ✅ DONE (2026-06-21)
 **Goal:** the escalation workflow (FR-007) and a real appeals loop — reviewers see
 queued items and record overrides; the public can file appeals that land in the queue.
+
+Delivered: `ReviewStore` (in-memory + SQL); Trust Engine `/v1/review` +
+`/v1/appeals` with score-time auto-enqueue and override → new `human-override`
+verdict version + audit (INV-OVERRIDE); gateway `admin` review/appeals routes + a
+public `POST /v1/appeals`; admin Review/Appeals UI; live public `AppealEntry`.
 
 **Backend**
 - `ReviewStore` (queue of items needing review: confidence < 70%, evidence conflict,

@@ -34,3 +34,33 @@ export async function fetchVerdict(
     return { result: sampleResult, evidence: sampleEvidence, live: false };
   }
 }
+
+export type AppealType = "new_evidence" | "source_challenge" | "methodology";
+
+export interface AppealInput {
+  claimId: string;
+  appealType: AppealType;
+  body: string;
+  submitter?: string;
+}
+
+/**
+ * Submit a public appeal to the gateway (`POST /v1/appeals`, no API key). The
+ * appeal lands in the review queue and is logged publicly. Throws on a non-2xx
+ * response so the caller can show success vs. failure.
+ */
+export async function submitAppeal(input: AppealInput): Promise<void> {
+  const res = await fetch(`${GATEWAY_URL}/v1/appeals`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      claim_id: input.claimId,
+      appeal_type: input.appealType,
+      body: input.body,
+      ...(input.submitter ? { submitter: input.submitter } : {}),
+    }),
+  });
+  if (!res.ok) {
+    throw new Error(`appeal submission failed (${res.status})`);
+  }
+}
