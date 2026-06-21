@@ -1,7 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { AdminApiError, getMetrics, type MetricsView } from "../lib/adminApi";
+import {
+  AdminApiError,
+  getMetrics,
+  listCalibrationRuns,
+  recordCalibrationRun,
+  type CalibrationRun,
+  type MetricsView,
+} from "../lib/adminApi";
 
 function pct(x: number): string {
   return `${(x * 100).toFixed(1)}%`;
@@ -16,12 +23,15 @@ export function Dashboard({
   onAuthError?: () => void;
 }) {
   const [metrics, setMetrics] = useState<MetricsView | null>(null);
+  const [runs, setRuns] = useState<CalibrationRun[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [recording, setRecording] = useState(false);
 
   const load = useCallback(async () => {
     setError(null);
     try {
       setMetrics(await getMetrics(apiKey));
+      setRuns(await listCalibrationRuns(apiKey));
     } catch (err: unknown) {
       if (
         err instanceof AdminApiError &&
@@ -38,6 +48,19 @@ export function Dashboard({
   useEffect(() => {
     void load();
   }, [load]);
+
+  async function record() {
+    setRecording(true);
+    setError(null);
+    try {
+      await recordCalibrationRun(apiKey);
+      setRuns(await listCalibrationRuns(apiKey));
+    } catch {
+      setError("Could not record a calibration run.");
+    } finally {
+      setRecording(false);
+    }
+  }
 
   if (error) return <p role="alert">{error}</p>;
   if (metrics === null) return <p>Loading metrics…</p>;
@@ -97,6 +120,25 @@ export function Dashboard({
       <section aria-label="corpus">
         <h2>Corpus</h2>
         <p>Claims with verdicts: {claims_count}</p>
+      </section>
+
+      <section aria-label="calibration ledger">
+        <h2>Calibration ledger</h2>
+        <button type="button" onClick={record} disabled={recording}>
+          {recording ? "Recording…" : "Record a run"}
+        </button>
+        {runs.length === 0 ? (
+          <p>No runs recorded yet.</p>
+        ) : (
+          <ol>
+            {runs.map((r) => (
+              <li key={r.id}>
+                #{r.id} @ {r.recorded_time} — accuracy {pct(r.verdict_accuracy)}
+                , ECE {r.calibration_error.toFixed(3)} ({r.total} cases)
+              </li>
+            ))}
+          </ol>
+        )}
       </section>
     </main>
   );

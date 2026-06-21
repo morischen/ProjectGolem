@@ -449,6 +449,33 @@ export function buildApp(opts: AppOptions = {}): FastifyInstance {
     },
   );
 
+  // Calibration ledger (§28.12): view recorded runs + trigger a new benchmark run.
+  app.get(
+    "/admin/calibration",
+    { preHandler: protect("admin") },
+    async (_request, reply) => {
+      try {
+        return await admin.listCalibrationRuns();
+      } catch {
+        reply.code(502);
+        return { error: "trust-engine unavailable" };
+      }
+    },
+  );
+
+  app.post(
+    "/admin/calibration/run",
+    { preHandler: protect("admin") },
+    async (_request, reply) => {
+      try {
+        return await admin.recordCalibrationRun();
+      } catch {
+        reply.code(502);
+        return { error: "trust-engine unavailable" };
+      }
+    },
+  );
+
   // Access management (A4): managed API keys with admin CRUD. Key material lives in
   // the gateway (auth boundary); changes are mirrored into the Trust Engine audit log.
   app.get("/admin/keys", { preHandler: protect("admin") }, async () =>

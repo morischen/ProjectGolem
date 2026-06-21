@@ -169,6 +169,19 @@ export class AdminClient {
     return this.get<Record<string, unknown>>("/v1/metrics");
   }
 
+  async listCalibrationRuns(): Promise<Record<string, unknown>[]> {
+    return this.get<Record<string, unknown>[]>("/v1/calibration/runs");
+  }
+
+  /** Trigger a benchmark run and append it to the calibration ledger. */
+  async recordCalibrationRun(): Promise<Record<string, unknown>> {
+    const res = await fetch(`${this.baseUrl}/v1/calibration/runs`, {
+      method: "POST",
+    });
+    if (!res.ok) throw new Error(`trust-engine responded ${res.status}`);
+    return (await res.json()) as Record<string, unknown>;
+  }
+
   /** Best-effort: record an admin action (e.g. key management) in the audit log. */
   async recordAudit(entry: {
     actor: string;

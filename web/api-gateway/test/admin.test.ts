@@ -79,6 +79,15 @@ function fakeAdmin(overrides: Partial<AdminClient> = {}): AdminClient {
       claims_count: 1,
     }),
     recordAudit: async () => {},
+    listCalibrationRuns: async () => [
+      { id: 1, verdict_accuracy: 1, calibration_error: 0.2, total: 9 },
+    ],
+    recordCalibrationRun: async () => ({
+      id: 2,
+      verdict_accuracy: 1,
+      calibration_error: 0.2,
+      total: 9,
+    }),
     ...overrides,
   } as unknown as AdminClient;
 }
@@ -350,6 +359,32 @@ describe("gateway admin browse routes", () => {
     expect(res.statusCode).toBe(200);
     expect(res.json().benchmark.verdict_accuracy).toBe(1);
     expect(res.json().queue.open).toBe(1);
+    await app.close();
+  });
+
+  it("lists calibration runs and records a new one (admin only)", async () => {
+    const app = buildApp({ apiKeys: keys, admin: fakeAdmin() });
+    const denied = await app.inject({
+      method: "GET",
+      url: "/admin/calibration",
+    });
+    expect(denied.statusCode).toBe(401);
+
+    const list = await app.inject({
+      method: "GET",
+      url: "/admin/calibration",
+      headers: { "x-api-key": "admin-key" },
+    });
+    expect(list.statusCode).toBe(200);
+    expect(list.json()[0].verdict_accuracy).toBe(1);
+
+    const run = await app.inject({
+      method: "POST",
+      url: "/admin/calibration/run",
+      headers: { "x-api-key": "admin-key" },
+    });
+    expect(run.statusCode).toBe(200);
+    expect(run.json().id).toBe(2);
     await app.close();
   });
 });

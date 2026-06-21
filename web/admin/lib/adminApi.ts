@@ -230,6 +230,40 @@ export function getMetrics(apiKey: string): Promise<MetricsView> {
   return get<MetricsView>("/admin/metrics", apiKey);
 }
 
+/** One recorded calibration run (eip_persistence.CalibrationRunRecord). */
+export interface CalibrationRun {
+  id: number;
+  recorded_time: string;
+  total: number;
+  verdict_accuracy: number;
+  calibration_error: number;
+  payload: Record<string, unknown>;
+}
+
+/** Calibration ledger history (newest first), via GET /admin/calibration. */
+export function listCalibrationRuns(apiKey: string): Promise<CalibrationRun[]> {
+  return get<CalibrationRun[]>("/admin/calibration", apiKey);
+}
+
+/** Trigger + record a new benchmark run, via POST /admin/calibration/run. */
+export async function recordCalibrationRun(
+  apiKey: string,
+): Promise<CalibrationRun> {
+  const res = await fetch(`${GATEWAY_URL}/admin/calibration/run`, {
+    method: "POST",
+    headers: { "x-api-key": apiKey },
+  });
+  const json = await res.json();
+  if (!res.ok) {
+    throw new AdminApiError(
+      `record run failed (${res.status})`,
+      res.status,
+      json,
+    );
+  }
+  return json as CalibrationRun;
+}
+
 /** Managed API keys (metadata only), via GET /admin/keys. */
 export function listKeys(apiKey: string): Promise<KeyMeta[]> {
   return get<KeyMeta[]>("/admin/keys", apiKey);
