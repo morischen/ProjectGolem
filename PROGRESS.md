@@ -252,9 +252,16 @@ Decisions locked:
 
 ## 🔄 In progress
 
-- _Nothing in flight._ Admin portal **A1 (read-only verdict browser) is complete**
-  (backend + frontend). Next admin milestone is **A2** (config + audit) — see
-  Backlog and [docs/admin-portal-plan.md](docs/admin-portal-plan.md).
+- **Admin portal A2 — scoring config & source reliability** (view → guarded edit +
+  audit). Plan: [docs/admin-portal-plan.md](docs/admin-portal-plan.md).
+  - ✅ **A2.1 (data layer, done):** `eip-persistence` gains `ConfigStore` (versioned,
+    per-profile, append-only) and `AuditStore` (append-only action log), each with
+    in-memory + SQL adapters and `ConfigRecord`/`AuditRecord` models. Schema-agnostic
+    payloads keep the lib dependency-light (ScoringWeights shape stays in trust-engine).
+  - ⏭️ **A2.2 (next):** Trust Engine `GET/POST /v1/config` (new version on edit,
+    audited, sum-to-1 enforced); scoring reads the active config version.
+  - ⏭️ **A2.3:** gateway `admin`-scoped `GET/POST /admin/config`.
+  - ⏭️ **A2.4:** admin **Config** page (view + guarded edit + version/diff/history).
 
 ---
 
@@ -314,6 +321,12 @@ Larger initiatives, not single mechanical loops — each needs its own scoping:
 
 ## Loop log (append-only, newest first)
 
+- **2026-06-21** — Admin portal A2.1 (data layer) loop: added `ConfigStore`
+  (versioned, per-profile, append-only) + `AuditStore` (append-only action log) to
+  `eip-persistence`, each with in-memory + SQL adapters; new `ConfigRecord`/
+  `AuditRecord` models. Stores are schema-agnostic (payload dicts) so the lib stays
+  dependency-light. Verification: hermetic `make qa` green (40 tests incl. SQLite
+  parity; mypy clean across 6 source files).
 - **2026-06-21** — Admin portal A1.2 (frontend) loop: new `web/admin` Next.js app
   (`@eip/admin`) — API-key login (`admin` scope) + read-only claims list +
   per-claim verdict-history drill-down, calling the gateway `/admin/*` proxies via
