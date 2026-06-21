@@ -323,6 +323,11 @@ Larger initiatives, not single mechanical loops — each needs its own scoping:
 
 ## Loop log (append-only, newest first)
 
+- **2026-06-21** — Independence IND1 (evidence endpoint) loop: evidence-engine
+  `POST /v1/independence` exposes `assess_independence` (source_ids + citations →
+  distinct/independent-group counts + `independence_ratio` + groups), so
+  citation-laundering can be measured over the HTTP boundary (ADR-0007). Pure, no
+  LLM/scoring. Verification: hermetic `make qa` green (33 passed; mypy clean).
 - **2026-06-21** — Assess pipeline AS2 (admin Assess tool) loop: admin app gains an
   `AssessClaim` component (new Assess tab) — submit claim text + claim id + optional
   evidence candidates (JSON), call `POST /v1/assess`, and render the verdict, score,

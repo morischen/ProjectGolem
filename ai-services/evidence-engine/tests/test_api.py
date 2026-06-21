@@ -76,3 +76,35 @@ def test_gather_uses_configured_retriever_when_no_candidates():
     assert len(body) == 1
     assert body[0]["id"] == "r1"
     assert body[0]["relation"] == "supports"
+
+
+def test_independence_all_distinct_when_no_citations():
+    client = _client(json.dumps({"relation": "supports"}))
+    res = client.post(
+        "/v1/independence",
+        json={"source_ids": ["a", "b", "c"], "citations": []},
+    )
+    assert res.status_code == 200
+    body = res.json()
+    assert body["distinct_sources"] == 3
+    assert body["independent_groups"] == 3
+    assert body["independence_ratio"] == 1.0
+
+
+def test_independence_detects_laundered_corroboration():
+    client = _client(json.dumps({"relation": "supports"}))
+    # b and c both derive from a → one independent voice, not three.
+    res = client.post(
+        "/v1/independence",
+        json={"source_ids": ["a", "b", "c"], "citations": [["b", "a"], ["c", "a"]]},
+    )
+    body = res.json()
+    assert body["independent_groups"] == 1
+    assert body["independence_ratio"] == 1 / 3
+
+
+def test_independence_empty_is_fully_independent():
+    client = _client(json.dumps({"relation": "supports"}))
+    res = client.post("/v1/independence", json={})
+    assert res.status_code == 200
+    assert res.json()["independence_ratio"] == 1.0

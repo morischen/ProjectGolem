@@ -17,6 +17,7 @@ from pydantic import BaseModel, Field
 from eip_evidence._generated.evidence import Evidence
 from eip_evidence.composite import build_retriever_from_env
 from eip_evidence.engine import gather
+from eip_evidence.independence import assess_independence
 from eip_evidence.models import Candidate
 from eip_evidence.retriever import Retriever, StubRetriever
 
@@ -24,6 +25,19 @@ from eip_evidence.retriever import Retriever, StubRetriever
 class GatherRequest(BaseModel):
     claim_text: str
     candidates: list[Candidate] = Field(default_factory=list)
+
+
+class IndependenceRequest(BaseModel):
+    source_ids: list[str] = Field(default_factory=list)
+    # Each citation (a, b) means source a cites/derives from b → shared provenance.
+    citations: list[tuple[str, str]] = Field(default_factory=list)
+
+
+class IndependenceResponse(BaseModel):
+    distinct_sources: int
+    independent_groups: int
+    independence_ratio: float
+    groups: list[list[str]]
 
 
 def create_app(llm: LLMClient | None = None, retriever: Retriever | None = None) -> FastAPI:
@@ -50,6 +64,18 @@ def create_app(llm: LLMClient | None = None, retriever: Retriever | None = None)
             return gather(request.claim_text, retriever=active, llm=engine_llm).evidence
         except LLMError as e:
             raise HTTPException(status_code=502, detail=f"LLM provider error: {e}") from e
+
+    @app.post("/v1/independence", response_model=IndependenceResponse)
+    def independence_endpoint(request: IndependenceRequest) -> IndependenceResponse:
+        # Pure provenance analysis (ADR-0007): groups sources sharing an origin so the
+        # Trust Engine isn't fooled by laundered corroboration. No LLM, no scoring.
+        report = assess_independence(request.source_ids, request.citations)
+        return IndependenceResponse(
+            distinct_sources=report.distinct_sources,
+            independent_groups=report.independent_groups,
+            independence_ratio=report.independence_ratio,
+            groups=report.groups,
+        )
 
     return app
 
