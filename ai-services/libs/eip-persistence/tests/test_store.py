@@ -51,6 +51,23 @@ def test_as_of_returns_version_current_at_that_time():
     assert store.as_of("c1", datetime(2023, 1, 1)) is None  # before any assessment
 
 
+def test_list_claims_returns_latest_per_claim_newest_first():
+    store = _store()  # claim c1 with 3 versions @ T1<T2<T3
+    store.append("c2", verdict="Verified", score=0.9, weights_version="v0", knowledge_time=T2)
+    claims = store.list_claims()
+    # one row per claim, latest version, newest knowledge_time first
+    assert [(c.claim_id, c.version) for c in claims] == [("c1", 3), ("c2", 1)]
+
+
+def test_list_claims_paginates():
+    store = InMemoryVerdictStore()
+    for i, t in enumerate((T1, T2, T3)):
+        store.append(f"c{i}", verdict="Verified", score=0.9, weights_version="v0", knowledge_time=t)
+    page = store.list_claims(limit=1, offset=1)
+    assert len(page) == 1
+    assert page[0].claim_id == "c1"  # second-newest (T2)
+
+
 def test_unknown_claim_is_empty():
     store = InMemoryVerdictStore()
     assert store.latest("nope") is None

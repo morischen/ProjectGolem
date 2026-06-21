@@ -6,6 +6,7 @@ import type { Evidence, Verdict } from "@eip/contracts";
 import { ScorerClient } from "./scorerClient";
 import { ClaimClient } from "./claimClient";
 import { EvidenceClient } from "./evidenceClient";
+import { AdminClient } from "./adminClient";
 import { type ApiKeyMap, loadApiKeysFromEnv, requireScope } from "./auth";
 import { type RateLimitOptions, rateLimitHook } from "./rateLimit";
 
@@ -25,6 +26,8 @@ export interface AppOptions {
   scorer?: ScorerClient;
   claim?: ClaimClient;
   evidence?: EvidenceClient;
+  /** Read-only browse client for the admin portal (Trust Engine store). */
+  admin?: AdminClient;
   /** API keys → scopes. Empty/omitted → auth disabled (dev). Default: from env. */
   apiKeys?: ApiKeyMap;
   /** Rate-limit config, or null to disable. Default: 120 requests / 60s. */
@@ -61,6 +64,9 @@ export function buildApp(opts: AppOptions = {}): FastifyInstance {
     new EvidenceClient(
       process.env.EVIDENCE_ENGINE_URL ?? "http://localhost:8002",
     );
+  const admin =
+    opts.admin ??
+    new AdminClient(process.env.TRUST_ENGINE_URL ?? "http://localhost:8000");
 
   const apiKeys = opts.apiKeys ?? loadApiKeysFromEnv();
   const rateLimitOpts =
@@ -157,6 +163,57 @@ export function buildApp(opts: AppOptions = {}): FastifyInstance {
       } catch {
         reply.code(502);
         return { error: "evidence-engine unavailable" };
+      }
+    },
+  );
+
+  // Admin browse surface (read-only). Proxies the Trust Engine store under the
+  // `admin` scope for the admin portal (A1). Never mutates or scores.
+  app.get(
+    "/admin/claims",
+    { preHandler: protect("admin") },
+    async (request, reply) => {
+      const q = (request.query ?? {}) as { limit?: string; offset?: string };
+      const limit = q.limit !== undefined ? Number(q.limit) : undefined;
+      const offset = q.offset !== undefined ? Number(q.offset) : undefined;
+      try {
+        return await admin.listClaims({ limit, offset });
+      } catch {
+        reply.code(502);
+        return { error: "trust-engine unavailable" };
+      }
+    },
+  );
+
+  app.get(
+    "/admin/claims/:id/verdicts",
+    { preHandler: protect("admin") },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      try {
+        return await admin.claimHistory(id);
+      } catch {
+        reply.code(502);
+        return { error: "trust-engine unavailable" };
+      }
+    },
+  );
+
+  app.get(
+    "/admin/claims/:id/verdict",
+    { preHandler: protect("admin") },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      try {
+        const record = await admin.latestVerdict(id);
+        if (record === null) {
+          reply.code(404);
+          return { error: "no verdict for claim" };
+        }
+        return record;
+      } catch {
+        reply.code(502);
+        return { error: "trust-engine unavailable" };
       }
     },
   );

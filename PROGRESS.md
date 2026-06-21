@@ -252,8 +252,14 @@ Decisions locked:
 
 ## 🔄 In progress
 
-- _Nothing in flight._ The autonomous loop session drained the entire queued Next
-  list (Loops A–O). Future work lives in Backlog until scheduled.
+- **Admin portal A1 — read-only verdict browser.** Plan:
+  [docs/admin-portal-plan.md](docs/admin-portal-plan.md).
+  - ✅ **A1.1 (backend, done):** `VerdictStore.list_claims()` (in-memory + SQL,
+    latest-per-claim, paginated); Trust Engine `GET /v1/claims`; gateway
+    `admin`-scoped proxies `GET /admin/claims`, `/admin/claims/:id/verdicts`,
+    `/admin/claims/:id/verdict`.
+  - ⏭️ **A1.2 (frontend, next):** `web/admin` Next.js app (API-key login, claims
+    list + claim detail), wired into the pnpm workspace, CI, and QA.
 
 ---
 
@@ -313,6 +319,12 @@ Larger initiatives, not single mechanical loops — each needs its own scoping:
 
 ## Loop log (append-only, newest first)
 
+- **2026-06-21** — Admin portal A1.1 (backend) loop: `VerdictStore.list_claims()`
+  (in-memory + SQL, latest-per-claim, paginated) + Trust Engine `GET /v1/claims` +
+  gateway `admin`-scoped `/admin/claims[...]` proxies (new `AdminClient`). Also let
+  Next.js own `web/portal/tsconfig.json`/`next-env.d.ts` via `.prettierignore`
+  (stops the per-loop revert dance). Verification: hermetic `./scripts/qa.sh` green
+  (persistence 16, trust 57, gateway 26, all suites; mypy clean).
 - **2026-06-21** — #3 hardening loop: LLMError + timeout/retries (eip-llm) + 502
   mapping (claim/evidence APIs) + calibration harness (e2e). Verification: hermetic
   `./scripts/qa.sh` green; live calibration + engine live tests PASS with the key.

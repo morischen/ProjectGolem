@@ -50,6 +50,30 @@ def test_repeated_scores_accrue_versions():
     assert latest["version"] == 2 and latest["verdict"] == "False"
 
 
+def test_list_claims_returns_latest_per_claim():
+    client = TestClient(create_app(InMemoryVerdictStore()))
+    client.post("/v1/score", json={"claim_id": "c1", "evidence": _supports(3)})
+    client.post("/v1/score", json={"claim_id": "c1", "evidence": _contradicts(3)})  # c1 v2
+    client.post("/v1/score", json={"claim_id": "c2", "evidence": _supports(3)})
+
+    claims = client.get("/v1/claims").json()
+    assert {(c["claim_id"], c["version"]) for c in claims} == {("c1", 2), ("c2", 1)}
+
+
+def test_list_claims_paginates():
+    client = TestClient(create_app(InMemoryVerdictStore()))
+    for i in range(3):
+        client.post("/v1/score", json={"claim_id": f"c{i}", "evidence": _supports(3)})
+    page = client.get("/v1/claims", params={"limit": 2, "offset": 0}).json()
+    assert len(page) == 2
+
+
+def test_list_claims_no_store_is_empty(monkeypatch):
+    monkeypatch.delenv("POSTGRES_DSN", raising=False)
+    client = TestClient(create_app())
+    assert client.get("/v1/claims").json() == []
+
+
 def test_score_without_claim_id_does_not_persist():
     client = TestClient(create_app(InMemoryVerdictStore()))
     client.post("/v1/score", json={"evidence": _supports(3)})  # no claim_id

@@ -63,6 +63,15 @@ def test_event_time_and_payload_persist():
     assert rec.payload == {"net_support": 1.0}
 
 
+def test_list_claims_latest_per_claim():
+    store = _seeded()  # c1 @ T1<T2<T3 (3 versions)
+    store.append("c2", verdict="Verified", score=0.9, weights_version="v0", knowledge_time=T2)
+    claims = store.list_claims()
+    assert {(c.claim_id, c.version) for c in claims} == {("c1", 3), ("c2", 1)}
+    # newest knowledge_time first: c1 (T3) before c2 (T2)
+    assert [c.claim_id for c in claims] == ["c1", "c2"]
+
+
 def test_unknown_claim_is_empty():
     store = _store()
     assert store.latest("nope") is None

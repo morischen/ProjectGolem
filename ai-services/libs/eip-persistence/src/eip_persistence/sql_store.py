@@ -22,6 +22,7 @@ from sqlalchemy import (
     String,
     Table,
     UniqueConstraint,
+    and_,
     func,
     insert,
     select,
@@ -123,6 +124,32 @@ class SqlVerdictStore:
             select(verdict_records)
             .where(verdict_records.c.claim_id == claim_id)
             .order_by(verdict_records.c.version.asc())
+        )
+        with self._engine.connect() as conn:
+            rows = conn.execute(stmt).mappings().all()
+        return [_to_record(row) for row in rows]
+
+    def list_claims(self, *, limit: int = 100, offset: int = 0) -> list[VerdictRecord]:
+        latest = (
+            select(
+                verdict_records.c.claim_id,
+                func.max(verdict_records.c.version).label("v"),
+            )
+            .group_by(verdict_records.c.claim_id)
+            .subquery()
+        )
+        stmt = (
+            select(verdict_records)
+            .join(
+                latest,
+                and_(
+                    verdict_records.c.claim_id == latest.c.claim_id,
+                    verdict_records.c.version == latest.c.v,
+                ),
+            )
+            .order_by(verdict_records.c.knowledge_time.desc())
+            .limit(limit)
+            .offset(offset)
         )
         with self._engine.connect() as conn:
             rows = conn.execute(stmt).mappings().all()

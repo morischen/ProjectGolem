@@ -34,6 +34,8 @@ class VerdictStore(Protocol):
 
     def as_of(self, claim_id: str, knowledge_time: datetime) -> VerdictRecord | None: ...
 
+    def list_claims(self, *, limit: int = 100, offset: int = 0) -> list[VerdictRecord]: ...
+
 
 class InMemoryVerdictStore:
     def __init__(self) -> None:
@@ -76,3 +78,9 @@ class InMemoryVerdictStore:
             r for r in self._by_claim.get(claim_id, []) if r.knowledge_time <= knowledge_time
         ]
         return max(candidates, key=lambda r: r.version) if candidates else None
+
+    def list_claims(self, *, limit: int = 100, offset: int = 0) -> list[VerdictRecord]:
+        """Latest verdict per claim, newest knowledge_time first (paginated)."""
+        latest = [records[-1] for records in self._by_claim.values() if records]
+        latest.sort(key=lambda r: r.knowledge_time, reverse=True)
+        return latest[offset : offset + limit]

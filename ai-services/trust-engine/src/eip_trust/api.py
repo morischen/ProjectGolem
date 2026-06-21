@@ -75,6 +75,12 @@ def create_app(store: VerdictStore | None = None) -> FastAPI:
             )
         return result
 
+    @app.get("/v1/claims", response_model=list[VerdictRecord])
+    def list_claims(limit: int = 100, offset: int = 0) -> list[VerdictRecord]:
+        if verdict_store is None:
+            return []
+        return verdict_store.list_claims(limit=limit, offset=offset)
+
     @app.get("/v1/claims/{claim_id}/verdicts", response_model=list[VerdictRecord])
     def verdict_history(claim_id: str) -> list[VerdictRecord]:
         return verdict_store.history(claim_id) if verdict_store is not None else []
