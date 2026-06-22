@@ -252,10 +252,11 @@ Decisions locked:
 
 ## 🔄 In progress
 
-- _Nothing in flight._ Admin portal **A4 (calibration dashboard & access
-  management) is complete** — which completes the **entire A1–A4 admin portal**
-  ([docs/admin-portal-plan.md](docs/admin-portal-plan.md)). Pick the next initiative
-  from Backlog when ready.
+- _Nothing in flight._ **The entire scheduled backlog is drained** (admin portal
+  A1–A4, end-to-end assessment, graph independence, calibration ledger, expanded
+  benchmark, rate-limit seam, offline embedder + graph seeding, multi-approver
+  config control, public claim submission, ADRs). Only infra-blocked items remain —
+  see **Backlog → Deferred**. Pick one up when the supporting infrastructure exists.
 
 ---
 
@@ -275,8 +276,11 @@ Decisions locked:
 
 ## ⏭️ Next (proposed — confirm before starting)
 
-✅ **The queued roadmap is fully implemented (Loops A–O).** Nothing is scheduled.
-Pick the next initiative from Backlog when ready.
+✅ **The full roadmap and backlog are implemented.** Nothing is scheduled. The only
+remaining work is the infra-blocked **Deferred** list under Backlog — each has a
+tested seam/adapter awaiting the live service (OIDC provider, Redis, hosted embedding
+model, running Neo4j/Qdrant, Postgres-backed KeyStore) or external data (larger §28
+corpus). Plus the standing operational task: **rotate the leaked OpenRouter dev key**.
 
 ---
 
@@ -284,44 +288,52 @@ Pick the next initiative from Backlog when ready.
 
 Larger initiatives, not single mechanical loops — each needs its own scoping:
 
+**The backlog is drained** — every scheduled initiative is implemented and green.
+What remains is genuinely blocked on external infrastructure (see "Deferred" below);
+the code seams/adapters for those are in place and tested.
+
 - ✅ **Real retrieval backends — DONE** (P1 Qdrant semantic, P2 Neo4j graph +
   independence/citation-laundering, P3 composite + env-wired API + docker-compose
-  docs). All hermetic in CI; live DBs validated via docker-compose. Remaining
-  follow-ups: a real embedding model, graph-schema seeding scripts. (✅ feeding
-  `independence_ratio` into the Trust Engine is done — `score_claim(independence=...)`
-  + `/v1/score`; remaining is threading it through the gateway end to end.)
-- ✅ **Persistence & bitemporal verdicts — DONE** (Q1 store + Q2 SQL adapter + Q3
-  persist-in-pipeline + history API). Follow-ups: a fuller action audit log (beyond
-  verdict history), and gateway passthrough of `claim_id` to `/v1/score`.
-- ✅ **Real LLM enablement — DONE** (via OpenRouter, ADR-0009): client + env selector
-  + structured outputs (JSON mode + tolerant parser) + guarded live tests +
-  refusal/rate-limit/timeout handling (`LLMError`, timeout/retries, 502 mapping) +
-  a calibration harness (relation/verdict accuracy) — all live-verified against
-  Opus 4.8 via OpenRouter. Follow-up: a larger labeled source-level dataset to run
-  full §28 calibration (ECE/bias gates) at scale.
-- ✅ **AuthN/Z + rate limiting — DONE (first cut)**: API-key auth (scopes/RBAC) +
-  in-memory rate limiting at the gateway. Follow-up: OIDC/MFA + a shared/distributed
-  rate-limit store (blueprint §22).
-- ✅ **Admin portal — DONE** (A1 read-only browser → A2 config+audit → A3 review
-  queue/appeals → A4 dashboards+keys). Full operator surface in `web/admin` with
-  Dashboard/Claims/Review/Appeals/Config/Access tabs; see
-  [docs/admin-portal-plan.md](docs/admin-portal-plan.md). Follow-ups: persistent
-  calibration ledger (§28.12), DB-backed KeyStore + OIDC/MFA, multi-approver change
-  control.
-- ✅ **End-to-end claim assessment — DONE** (AS1 gateway `POST /v1/assess`
-  orchestration + AS2 admin "Assess" tab). One call runs extract → gather → score →
-  persist and returns `{claim, evidence, result}`; the admin tool drives it and
-  renders the verdict + breakdown + evidence. Independence uses the Trust Engine's
-  built-in heuristic by default; a **graph-derived override** is now wired through
-  `/v1/assess` (optional `citations` → evidence-engine `/v1/independence` → score),
-  see the Independence loops. A public claim-submission surface remains a later
-  enhancement.
-- ✅ **ADRs for open decisions — DONE**: ARCHITECTURE.md §8 decisions recorded as
-  ADR-0010 (Postgres canonical + Neo4j projection, Accepted), 0011 (embeddings +
-  chunking, Proposed), 0012 (multilingual pipeline, Proposed), 0013 (auth: API keys
-  now, OIDC later, Proposed). §8 now links to them.
+  docs). Follow-ups all DONE: offline `HashingEmbedder` behind the Embedder seam
+  (a real lexical embedder; hosted multilingual model is the deferred step),
+  `graph_schema.py` + `scripts/seed_graph.py` (Neo4j constraints/indexes), and
+  `independence_ratio` threaded end to end through the gateway (`/v1/assess` →
+  `/v1/independence` → score).
+- ✅ **Persistence & bitemporal verdicts — DONE** (store + SQL adapter +
+  persist-in-pipeline + history API). Follow-ups DONE: full append-only audit log
+  (`AuditStore`, A2) and gateway `claim_id` passthrough to `/v1/score`.
+- ✅ **Real LLM enablement — DONE** (OpenRouter, ADR-0009): recorded client + env
+  selector + structured outputs + LLMError/timeout/retry handling + calibration
+  harness, live-verified vs Opus 4.8. The gold seed grew 9 → 21 cases; a *larger
+  real-world labeled corpus* for full §28 ECE/bias gates is deferred (data sourcing).
+- ✅ **AuthN/Z + rate limiting — DONE**: API-key scopes/RBAC + managed `KeyStore`
+  (hashed, A4) + a pluggable `RateLimitStore` seam (in-memory default; Redis adapter
+  deferred to infra). OIDC/MFA recorded as [ADR-0013] and deferred (needs a provider).
+- ✅ **Admin portal — DONE** (A1–A4). Follow-ups DONE: persistent calibration ledger
+  (§28.12, `CalibrationStore` + Dashboard trend) and multi-approver change control
+  (config proposals + approvals). DB-backed KeyStore deferred (infra).
+- ✅ **End-to-end claim assessment — DONE** (`POST /v1/assess` + admin Assess tab +
+  graph-independence override). ✅ **Public claim-submission surface — DONE**
+  (`/v1/claims/submit` → `claim_intake` review item; portal `ClaimSubmit`).
+- ✅ **ADRs for open decisions — DONE** (ADR-0010 Accepted; 0011/0012/0013 Proposed).
 - ✅ **Blueprint governance sections — DONE** (v1.2): Legal & Liability (§29),
   Platform Threat Model (§30), Budget revision (§25).
+
+### Deferred — blocked on external infrastructure (seams in place, live wiring pending)
+These need a running service / hosted model / data we can't stand up in the
+hermetic sandbox; each has a tested code seam or adapter ready to plug in:
+- **OIDC/MFA provider** (ADR-0013) — gateway validates tokens → existing scope model;
+  needs a provider (Auth0/Keycloak/Cognito-class).
+- **Redis (or shared) rate-limit store** — implement `RateLimitStore.hit()` with
+  `INCR`+`PEXPIRE`; the seam + in-memory default already ship.
+- **Hosted multilingual embedding model** (ADR-0011) — implement the `Embedder`
+  protocol; the offline `HashingEmbedder` is the working default meanwhile.
+- **Live Neo4j/Qdrant projection + seeding** — `scripts/seed_graph.py` and the
+  retriever adapters are ready; needs the running DBs (infra/docker-compose) and a
+  canonical→projection sync job.
+- **DB-backed KeyStore** — persist the gateway `KeyStore` to Postgres for multi-replica.
+- **Larger labeled §28 calibration corpus** — to run ECE/bias gates at real scale.
+- **Rotate the leaked OpenRouter dev key** (operational, not code) — still outstanding.
 
 ---
 
