@@ -327,6 +327,12 @@ Larger initiatives, not single mechanical loops — each needs its own scoping:
 
 ## Loop log (append-only, newest first)
 
+- **2026-06-21** — Public claim-submission loop: Trust Engine `POST /v1/claim-intake`
+  queues a public claim proposal as a `claim_intake` review item (audited, triaged
+  before assessment); gateway public rate-limited `POST /v1/claims/submit`; portal
+  `ClaimSubmit` form (lib/gateway.submitClaim) alongside AppealEntry. Assessment stays
+  authenticated — the public path only enqueues. Verification: hermetic
+  `./scripts/qa.sh` green (trust-engine 88, gateway 57, portal 14); portal build OK.
 - **2026-06-21** — Multi-approver config change control loop (governance §20): added
   `proposals.py` (ConfigProposal + InMemoryProposalStore with separation-of-duties
   rules) and Trust Engine endpoints `POST /v1/config/proposals` (validates weights

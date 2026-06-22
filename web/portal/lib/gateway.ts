@@ -64,3 +64,25 @@ export async function submitAppeal(input: AppealInput): Promise<void> {
     throw new Error(`appeal submission failed (${res.status})`);
   }
 }
+
+/**
+ * Submit a claim for assessment (`POST /v1/claims/submit`, no API key). The claim
+ * enters the review queue for triage; it is not scored on the spot. Throws on a
+ * non-2xx response so the caller can show success vs. failure.
+ */
+export async function submitClaim(input: {
+  text: string;
+  submitter?: string;
+}): Promise<void> {
+  const res = await fetch(`${GATEWAY_URL}/v1/claims/submit`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      text: input.text,
+      ...(input.submitter ? { submitter: input.submitter } : {}),
+    }),
+  });
+  if (!res.ok) {
+    throw new Error(`claim submission failed (${res.status})`);
+  }
+}

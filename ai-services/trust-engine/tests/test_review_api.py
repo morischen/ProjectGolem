@@ -164,6 +164,27 @@ def test_appeal_submit_creates_queue_item_and_is_logged():
     assert any(e.action == "appeal.submit" for e in audit.list())
 
 
+def test_claim_intake_queues_a_triage_item_and_logs():
+    client, audit = _app()
+    res = client.post(
+        "/v1/claim-intake",
+        json={"text": "Country Z shelled a hospital on 2024-03-01.", "submitter": "jo"},
+    )
+    assert res.status_code == 200
+    item = res.json()
+    assert item["kind"] == "claim_intake"
+    assert item["detail"]["text"].startswith("Country Z")
+    # Shows up in the open review queue and is audited.
+    queue = client.get("/v1/review", params={"status": "open"}).json()
+    assert any(i["kind"] == "claim_intake" for i in queue)
+    assert any(e.action == "claim.intake" for e in audit.list())
+
+
+def test_claim_intake_requires_text():
+    client, _ = _app()
+    assert client.post("/v1/claim-intake", json={"submitter": "jo"}).status_code == 422
+
+
 def test_appeal_invalid_type_is_422():
     client, _ = _app()
     res = client.post(

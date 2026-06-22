@@ -217,6 +217,16 @@ export class AdminClient {
     return { status: res.status, body: await res.json() };
   }
 
+  /** Submit a public claim for triage. Preserves the engine status (422 on empty). */
+  async submitClaimIntake(body: unknown): Promise<WriteResult> {
+    const res = await fetch(`${this.baseUrl}/v1/claim-intake`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    return { status: res.status, body: await res.json() };
+  }
+
   private async get<T>(path: string): Promise<T> {
     const res = await fetch(`${this.baseUrl}${path}`);
     if (!res.ok) throw new Error(`trust-engine responded ${res.status}`);

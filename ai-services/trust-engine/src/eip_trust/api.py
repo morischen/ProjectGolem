@@ -146,6 +146,14 @@ class AppealRequest(BaseModel):
     submitter: str | None = Field(default=None, description="Optional submitter identity.")
 
 
+class ClaimIntakeRequest(BaseModel):
+    """A public proposal that a claim be assessed. Lands in the review queue for
+    triage — it does not itself score (assessment is an authenticated operation)."""
+
+    text: str = Field(min_length=1, description="The claim a member of the public submits.")
+    submitter: str | None = Field(default=None, description="Optional submitter identity.")
+
+
 class AuditCreateRequest(BaseModel):
     """Record an admin action in the central audit log (e.g. from the gateway)."""
 
@@ -487,6 +495,26 @@ def create_app(
             actor=request.submitter or "public",
             action="appeal.submit",
             target=f"claim:{request.claim_id}",
+            knowledge_time=now,
+            after=item.model_dump(mode="json"),
+        )
+        return item
+
+    @app.post("/v1/claim-intake", response_model=ReviewRecord)
+    def submit_claim_intake(request: ClaimIntakeRequest) -> ReviewRecord:
+        # Public intake: queue a proposed claim for human triage (kind 'claim_intake');
+        # a reviewer later promotes it into a real assessment. Logged publicly.
+        now = datetime.now(UTC)
+        item = rev_store.open_item(
+            "intake",
+            kind="claim_intake",
+            created_time=now,
+            detail={"text": request.text, "submitter": request.submitter},
+        )
+        aud_store.record(
+            actor=request.submitter or "public",
+            action="claim.intake",
+            target=f"review:{item.id}",
             knowledge_time=now,
             after=item.model_dump(mode="json"),
         )

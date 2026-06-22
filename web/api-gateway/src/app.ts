@@ -565,5 +565,22 @@ export function buildApp(opts: AppOptions = {}): FastifyInstance {
     },
   );
 
+  // Public claim submission — no API key, rate-limited. The public proposes a claim;
+  // it lands in the review queue for triage (assessment stays authenticated).
+  app.post(
+    "/v1/claims/submit",
+    { preHandler: publicLimited() },
+    async (request, reply) => {
+      try {
+        const result = await admin.submitClaimIntake(request.body ?? {});
+        reply.code(result.status); // preserve 200 / 422
+        return result.body;
+      } catch {
+        reply.code(502);
+        return { error: "trust-engine unavailable" };
+      }
+    },
+  );
+
   return app;
 }

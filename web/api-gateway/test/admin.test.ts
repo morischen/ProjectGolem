@@ -68,6 +68,10 @@ function fakeAdmin(overrides: Partial<AdminClient> = {}): AdminClient {
       status: 200,
       body: { ...REVIEW_ITEM, kind: "appeal" },
     }),
+    submitClaimIntake: async () => ({
+      status: 200,
+      body: { ...REVIEW_ITEM, kind: "claim_intake" },
+    }),
     getMetrics: async () => ({
       benchmark: {
         total: 9,
@@ -335,6 +339,18 @@ describe("gateway admin browse routes", () => {
       payload: { claim_id: "c1", appeal_type: "nope", body: "x" },
     });
     expect(res.statusCode).toBe(422);
+    await app.close();
+  });
+
+  it("public claim submission needs no API key", async () => {
+    const app = buildApp({ apiKeys: keys, admin: fakeAdmin() });
+    const res = await app.inject({
+      method: "POST",
+      url: "/v1/claims/submit",
+      payload: { text: "Country Z shelled a hospital." },
+    });
+    expect(res.statusCode).toBe(200);
+    expect(res.json().kind).toBe("claim_intake");
     await app.close();
   });
 

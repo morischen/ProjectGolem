@@ -1,4 +1,5 @@
 import { AppealEntry } from "../components/AppealEntry";
+import { ClaimSubmit } from "../components/ClaimSubmit";
 import { ContradictionsPanel } from "../components/ContradictionsPanel";
 import { VerdictCard } from "../components/VerdictCard";
 import { fetchVerdict } from "../lib/gateway";
@@ -27,6 +28,7 @@ export default async function Home() {
       <VerdictCard result={result} evidence={evidence} />
       <ContradictionsPanel evidence={evidence} />
       <AppealEntry />
+      <ClaimSubmit />
     </main>
   );
 }
